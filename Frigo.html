@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>MiniFrigo</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+    --bg:#080b12;
+    --card:#121823;
+    --card-light:#182232;
+    --border:#263247;
+    --text:#f5f7fb;
+    --muted:#8d99aa;
+    --ice:#55c7ff;
+    --green:#43e28a;
+    --yellow:#ffd34d;
+    --orange:#ff9d42;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+}
+
+body{
+
+    background:
+    radial-gradient(circle at top,#162b42 0%,transparent 35%),
+    linear-gradient(180deg,#080b12,#0d111a);
+
+    color:var(--text);
+    min-height:100vh;
+
+}
+
+
+.container{
+
+    max-width:1000px;
+    margin:auto;
+    padding:25px;
+
+}
+
+
+/* HEADER */
+
+header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:40px;
+
+}
+
+
+.logo h1{
+
+    font-size:42px;
+    letter-spacing:-1px;
+
+}
+
+
+.logo p{
+
+    margin-top:8px;
+    color:var(--muted);
+
+}
+
+
+.status{
+
+    text-align:right;
+
+}
+
+
+.online{
+
+    color:var(--green);
+    font-weight:700;
+
+}
+
+
+.update{
+
+    margin-top:8px;
+    color:var(--muted);
+    font-size:14px;
+
+}
+
+
+
+/* TITOLI */
+
+.section-title{
+
+    font-size:26px;
+    margin-bottom:20px;
+
+}
+
+
+
+/* CARD BEVANDE */
+
+
+.grid{
+
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+    gap:22px;
+
+}
+
+
+
+.card{
+
+    background:
+    linear-gradient(
+        145deg,
+        rgba(255,255,255,.05),
+        rgba(255,255,255,.01)
+    );
+
+    backdrop-filter:blur(12px);
+
+    border:1px solid var(--border);
+
+    border-radius:22px;
+
+    padding:22px;
+
+    transition:.3s;
+
+}
+
+
+
+.card:hover{
+
+    transform:translateY(-5px);
+
+    border-color:var(--ice);
+
+}
+
+
+
+.product-image{
+
+    height:130px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:70px;
+
+    margin-bottom:15px;
+
+}
+
+
+
+.name{
+
+    font-size:22px;
+    font-weight:700;
+
+}
+
+
+.type{
+
+    color:var(--muted);
+    margin-top:5px;
+
+}
+
+
+
+/* QUANTITA */
+
+
+.stock{
+
+    margin-top:20px;
+
+}
+
+
+.stock-label{
+
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:10px;
+
+}
+
+
+.bar{
+
+    height:10px;
+
+    background:#293243;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+}
+
+
+
+.fill{
+
+    height:100%;
+
+    border-radius:20px;
+
+    background:linear-gradient(
+        90deg,
+        var(--ice),
+        var(--green)
+    );
+
+}
+
+
+
+.amount{
+
+    margin-top:10px;
+
+    font-size:14px;
+
+    color:var(--green);
+
+}
+
+
+
+/* PANNELLI */
+
+
+.info{
+
+    margin-top:40px;
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+
+    gap:22px;
+
+}
+
+
+
+.panel{
+
+    background:var(--card);
+
+    border:1px solid var(--border);
+
+    border-radius:22px;
+
+    padding:25px;
+
+}
+
+
+
+.panel h2{
+
+    margin-bottom:18px;
+
+}
+
+
+
+.panel p{
+
+    line-height:1.7;
+
+    color:#e7ebf2;
+
+}
+
+
+
+/* TEMPERATURA */
+
+
+.temperature{
+
+    font-size:46px;
+
+    font-weight:700;
+
+    color:var(--ice);
+
+    margin:15px 0;
+
+}
+
+
+
+/* FOOTER VOLUTAMENTE VUOTO */
+
+</style>
+
+</head>
+
+<body>
+
+
+<div class="container">
+
+<header>
+
+<div class="logo">
+
+<h1>🧊 MiniFrigo</h1>
+
+<p>Inventario bevande • Accesso tramite QR</p>
+
+</div>
+
+
+<div class="status">
+
+<div class="online">
+● ONLINE
+</div>
+
+<div class="update">
+
+Ultimo aggiornamento<br>
+
+30 Luglio 2026
+
+</div>
+
+</div>
+
+</header>
+
+
+<h2 class="section-title">
+🥤 Bevande disponibili
+</h2>
+
+
+<div class="grid">
+  <!-- RAFFO -->
+
+<div class="card">
+
+<div class="product-image">
+🍺
+</div>
+
+<div class="name">
+Raffo
+</div>
+
+<div class="type">
+Birra Lager
+</div>
+
+
+<div class="stock">
+
+<div class="stock-label">
+Disponibilità
+</div>
+
+<div class="bar">
+<div class="fill" style="width:90%"></div>
+</div>
+
+<div class="amount">
+Scorta ottima
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- SPRITZ -->
+
+<div class="card">
+
+<div class="product-image">
+🍹
+</div>
+
+<div class="name">
+Spritz
+</div>
+
+<div class="type">
+Bottiglia
+</div>
+
+
+<div class="stock">
+
+<div class="stock-label">
+Disponibilità
+</div>
+
+<div class="bar">
+<div class="fill" style="width:55%"></div>
+</div>
+
+<div class="amount">
+Scorta media
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- COCA COLA -->
+
+<div class="card">
+
+<div class="product-image">
+🥤
+</div>
+
+<div class="name">
+Coca-Cola
+</div>
+
+<div class="type">
+Classica
+</div>
+
+
+<div class="stock">
+
+<div class="stock-label">
+Disponibilità
+</div>
+
+<div class="bar">
+<div class="fill" style="width:75%"></div>
+</div>
+
+<div class="amount">
+Buona disponibilità
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- COCA ZERO -->
+
+<div class="card">
+
+<div class="product-image">
+🥤
+</div>
+
+<div class="name">
+Coca-Cola Zero
+</div>
+
+<div class="type">
+Zero zuccheri
+</div>
+
+
+<div class="stock">
+
+<div class="stock-label">
+Disponibilità
+</div>
+
+<div class="bar">
+<div class="fill" style="width:80%"></div>
+</div>
+
+<div class="amount">
+Scorta buona
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- COCA LIMONE -->
+
+<div class="card">
+
+<div class="product-image">
+🍋
+</div>
+
+<div class="name">
+Coca-Cola Limone
+</div>
+
+<div class="type">
+Edizione limone
+</div>
+
+
+<div class="stock">
+
+<div class="stock-label">
+Disponibilità
+</div>
+
+<div class="bar">
+<div class="fill" style="width:35%"></div>
+</div>
+
+<div class="amount">
+Quasi finita
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- CHINOTTO -->
+
+<div class="card">
+
+<div class="product-image">
+🫧
+</div>
+
+<div class="name">
+Chinotto
+</div>
+
+<div class="type">
+Bibita
+</div>
+
+
+<div class="stock">
+
+<div class="stock-label">
+Disponibilità
+</div>
+
+<div class="bar">
+<div class="fill" style="width:60%"></div>
+</div>
+
+<div class="amount">
+Scorta media
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- THE -->
+
+<div class="card">
+
+<div class="product-image">
+🧋
+</div>
+
+<div class="name">
+Tè Freddo
+</div>
+
+<div class="type">
+Pesca / Limone
+</div>
+
+
+<div class="stock">
+
+<div class="stock-label">
+Disponibilità
+</div>
+
+<div class="bar">
+<div class="fill" style="width:40%"></div>
+</div>
+
+<div class="amount">
+Poche unità
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- PANNELLI INFORMATIVI -->
+
+<div class="info">
+
+
+<div class="panel">
+
+<h2>
+📜 Regolamento
+</h2>
+
+
+<p>
+✅ Prendi quello che vuoi.
+</p>
+
+<p>
+🤝 Se finisci qualcosa, avvisa o riportala.
+</p>
+
+<p>
+🍻 Le ultime birre si chiedono sempre al proprietario.
+</p>
+
+<p>
+😄 Bere è consentito, svuotare il frigo no.
+</p>
+
+
+</div>
+
+
+
+<div class="panel">
+
+
+<h2>
+❄️ Stato MiniFrigo
+</h2>
+
+
+<div class="temperature">
+4°C
+</div>
+
+
+<p>
+<strong>Stato:</strong> Operativo
+</p>
+
+
+<p>
+<strong>Bevande presenti:</strong> 7
+</p>
+
+
+<p>
+<strong>Sistema:</strong> MiniFrigo v1.0
+</p>
+
+
+<p>
+<strong>Accesso:</strong> QR Code attivo
+</p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</body>
+
+</html>
