@@ -40,3 +40,4 @@ querySnapshot.forEach((doc)=>{
 
 
 document.getElementById("lista").innerHTML = html;
+document.getElementById("lista").innerHTML = "Script avviato";
