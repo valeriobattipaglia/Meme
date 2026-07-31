@@ -19,7 +19,7 @@ const db = getFirestore(app);
 
 
 const querySnapshot = await getDocs(
-    collection(db,"prodotti")
+    collection(db,"Prodotti")
 );
 
 
@@ -32,7 +32,7 @@ querySnapshot.forEach((doc)=>{
 
     html += `
     <p>
-    ${prodotto.nome}: ${prodotto.quantita}
+    ${prodotto.nome}: ${prodotto.quantità}
     </p>
     `;
 
