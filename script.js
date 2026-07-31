@@ -1,43 +1,30 @@
-import { initializeApp } from 
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import { getFirestore, collection, getDocs } 
-from 
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAkHOF2S_NRreXMHU1yDpc6o11r1wpxj9g",
-  authDomain: "minifrigo-673a5.firebaseapp.com",
-  projectId: "minifrigo-673a5"
-};
-
+console.log("1 - Script avviato");
 
 const app = initializeApp(firebaseConfig);
+console.log("2 - Firebase inizializzato");
 
 const db = getFirestore(app);
+console.log("3 - Firestore creato");
 
+try {
+    const querySnapshot = await getDocs(collection(db, "Prodotti"));
 
-const querySnapshot = await getDocs(
-    collection(db,"Prodotti")
-);
+    console.log("4 - Query eseguita");
+    console.log("Documenti:", querySnapshot.size);
 
+    let html = "";
 
-let html = "";
+    querySnapshot.forEach((doc) => {
+        console.log(doc.id, doc.data());
 
+        const prodotto = doc.data();
 
-querySnapshot.forEach((doc)=>{
+        html += `<p>${prodotto.Nome}: ${prodotto.Quantità}</p>`;
+    });
 
-    const prodotto = doc.data();
+    document.getElementById("lista").innerHTML = html;
 
-    html += `
-    <p>
-    ${prodotto.Nome}: ${prodotto.Quantità}
-    </p>
-    `;
-
-});
-
-
-document.getElementById("lista").innerHTML = html;
-document.getElementById("lista").innerHTML = "Script avviato";
+} catch (e) {
+    console.error(e);
+    document.getElementById("lista").innerHTML = e.message;
+}
