@@ -32,7 +32,7 @@ querySnapshot.forEach((doc)=>{
 
     html += `
     <p>
-    ${prodotto.nome}: ${prodotto.quantità}
+    ${prodotto.Nome}: ${prodotto.Quantità}
     </p>
     `;
 
