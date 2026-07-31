@@ -40,5 +40,6 @@ try {
 
 } catch (e) {
     console.error(e);
-    document.getElementById("lista").innerHTML = e.message;
+    document.getElementById("lista").innerHTML =
+"<pre>" + e.stack + "</pre>";
 }
