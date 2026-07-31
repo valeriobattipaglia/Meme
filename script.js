@@ -37,7 +37,7 @@ try {
 
         const prodotto = doc.data();
 
-        html += `<p>${prodotto.Nome}: ${prodotto.Quantità}</p>`;
+        html += `<p>${prodotto.Nome}</p>`;
     });
 
     document.getElementById("lista").innerHTML = html;
