@@ -42,6 +42,71 @@ body{
 
 }
 
+.hidden{
+    display:none !important;
+}
+
+.age-gate{
+    position:fixed;
+    inset:0;
+    background:rgba(3, 6, 12, 0.88);
+    display:grid;
+    place-items:center;
+    padding:20px;
+    z-index:99;
+}
+
+.age-card{
+    width:min(460px, 100%);
+    background:linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:28px;
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+
+.age-card h2{
+    font-size:28px;
+    margin-bottom:12px;
+}
+
+.age-card p{
+    color:var(--muted);
+    line-height:1.7;
+    margin-bottom:22px;
+}
+
+.age-actions{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    flex-wrap:wrap;
+}
+
+.age-button{
+    border:none;
+    border-radius:14px;
+    padding:12px 24px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:16px;
+    transition:.2s ease;
+}
+
+.age-button:hover{
+    transform:translateY(-1px);
+}
+
+.age-button.yes{
+    background:var(--green);
+    color:#082710;
+}
+
+.age-button.no{
+    background:#ff7488;
+    color:#1b0609;
+}
 
 .container{
 
@@ -256,6 +321,59 @@ header{
 
 
 
+/* ADMIN */
+
+.admin-panel{
+    margin-top:24px;
+}
+
+.admin-panel form{
+    display:grid;
+    gap:14px;
+}
+
+.admin-panel .admin-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:12px;
+}
+
+.admin-panel label{
+    display:block;
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:6px;
+}
+
+.admin-panel input,
+.admin-panel select,
+.admin-panel button{
+    width:100%;
+    border-radius:12px;
+    border:1px solid var(--border);
+    padding:12px 14px;
+    font-size:15px;
+}
+
+.admin-panel input,
+.admin-panel select{
+    background:#0c1320;
+    color:var(--text);
+}
+
+.admin-panel button{
+    background:var(--ice);
+    color:#07111b;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.admin-message{
+    margin-top:10px;
+    color:var(--green);
+    min-height:20px;
+}
+
 /* PANNELLI */
 
 
@@ -330,8 +448,18 @@ header{
 
 <body>
 
+<div id="age-gate" class="age-gate">
+    <div class="age-card">
+        <h2>Sei maggiorenne?</h2>
+        <p>Per continuare, conferma che hai almeno 18 anni. Se non sei maggiorenne, verrai reindirizzato automaticamente.</p>
+        <div class="age-actions">
+            <button class="age-button yes" data-age="yes">Sì</button>
+            <button class="age-button no" data-age="no">No</button>
+        </div>
+    </div>
+</div>
 
-<div class="container">
+<div id="site-shell" class="container hidden">
 
 <header>
 
@@ -346,11 +474,11 @@ header{
 
 <div class="status">
 
-<div class="online">
+<div id="online-status" class="online">
 ● ONLINE
 </div>
 
-<div class="update">
+<div class="update" id="last-update">
 
 Ultimo aggiornamento<br>
 
@@ -367,269 +495,92 @@ Ultimo aggiornamento<br>
 🥤 Bevande disponibili
 </h2>
 
+<div id="drink-grid" class="grid"></div>
 
-<div class="grid">
-  <!-- RAFFO -->
-
-<div class="card">
-
-<div class="product-image">
-🍺
+<div class="panel admin-panel">
+    <h2>🛠️ Admin • aggiungi bevanda</h2>
+    <form id="admin-form">
+        <div class="admin-row">
+            <div>
+                <label for="nome">Nome</label>
+                <input id="nome" name="nome" type="text" placeholder="es. Fanta" required>
+            </div>
+            <div>
+                <label for="tipo">Tipo</label>
+                <select id="tipo" name="tipo" required>
+                    <option value="Drink analcolico">Drink analcolico</option>
+                    <option value="Alcoolico">Alcoolico</option>
+                    <option value="Birra">Birra</option>
+                </select>
+            </div>
+        </div>
+        <div class="admin-row">
+            <div>
+                <label for="icona">Icona / emoji</label>
+                <select id="icona" name="icona">
+                    <option value="🥤">🥤</option>
+                    <option value="🍺">🍺</option>
+                    <option value="🍹">🍹</option>
+                    <option value="🍋">🍋</option>
+                    <option value="🫧">🫧</option>
+                    <option value="🧋">🧋</option>
+                    <option value="☕">☕</option>
+                    <option value="🥛">🥛</option>
+                </select>
+            </div>
+            <div>
+                <label for="quantita">Quantità bottiglie</label>
+                <input id="quantita" name="quantita" type="number" min="0" max="20" step="1" value="6" required>
+            </div>
+        </div>
+        <div class="admin-row">
+            <div>
+                <label for="litri-unita">Litri singola bottiglia</label>
+                <select id="litri-unita" name="litri-unita">
+                    <option value="0.33">0.33 L</option>
+                    <option value="0.5">0.5 L</option>
+                    <option value="1">1 L</option>
+                    <option value="1.5" selected>1.5 L</option>
+                    <option value="2">2 L</option>
+                </select>
+            </div>
+            <div>
+                <label>Totale stimato</label>
+                <input type="text" id="add-preview-litri" value="9.0 L" disabled>
+            </div>
+        </div>
+        <button type="submit">Salva su Firebase</button>
+        <div id="admin-message" class="admin-message"></div>
+    </form>
 </div>
 
-<div class="name">
-Raffo
+<div class="panel admin-panel">
+    <h2>🛠️ Admin • modifica disponibilità</h2>
+    <form id="availability-form">
+        <div class="admin-row">
+            <div>
+                <label for="admin-product">Bevanda</label>
+                <select id="admin-product" name="admin-product" required></select>
+            </div>
+            <div>
+                <label for="admin-quantita">Numero bottiglie</label>
+                <input id="admin-quantita" name="admin-quantita" type="number" min="0" max="20" step="1" value="1" required>
+            </div>
+        </div>
+        <div class="admin-row">
+            <div>
+                <label for="admin-litri-unita">Litri singola bottiglia</label>
+                <input id="admin-litri-unita" name="admin-litri-unita" type="text" value="0.33 L" disabled>
+            </div>
+            <div>
+                <label for="admin-litri-totali">Litri totali stimati</label>
+                <input id="admin-litri-totali" name="admin-litri-totali" type="text" value="0.33 L" disabled>
+            </div>
+        </div>
+        <button type="submit">Aggiorna disponibilità</button>
+        <div id="availability-message" class="admin-message"></div>
+    </form>
 </div>
-
-<div class="type">
-Birra Lager
-</div>
-
-
-<div class="stock">
-
-<div class="stock-label">
-Disponibilità
-</div>
-
-<div class="bar">
-<div class="fill" style="width:90%"></div>
-</div>
-
-<div class="amount">
-Scorta ottima
-</div>
-
-</div>
-
-</div>
-
-
-
-<!-- SPRITZ -->
-
-<div class="card">
-
-<div class="product-image">
-🍹
-</div>
-
-<div class="name">
-Spritz
-</div>
-
-<div class="type">
-Bottiglia
-</div>
-
-
-<div class="stock">
-
-<div class="stock-label">
-Disponibilità
-</div>
-
-<div class="bar">
-<div class="fill" style="width:55%"></div>
-</div>
-
-<div class="amount">
-Scorta media
-</div>
-
-</div>
-
-</div>
-
-
-
-<!-- COCA COLA -->
-
-<div class="card">
-
-<div class="product-image">
-🥤
-</div>
-
-<div class="name">
-Coca-Cola
-</div>
-
-<div class="type">
-Classica
-</div>
-
-
-<div class="stock">
-
-<div class="stock-label">
-Disponibilità
-</div>
-
-<div class="bar">
-<div class="fill" style="width:75%"></div>
-</div>
-
-<div class="amount">
-Buona disponibilità
-</div>
-
-</div>
-
-</div>
-
-
-
-<!-- COCA ZERO -->
-
-<div class="card">
-
-<div class="product-image">
-🥤
-</div>
-
-<div class="name">
-Coca-Cola Zero
-</div>
-
-<div class="type">
-Zero zuccheri
-</div>
-
-
-<div class="stock">
-
-<div class="stock-label">
-Disponibilità
-</div>
-
-<div class="bar">
-<div class="fill" style="width:80%"></div>
-</div>
-
-<div class="amount">
-Scorta buona
-</div>
-
-</div>
-
-</div>
-
-
-
-<!-- COCA LIMONE -->
-
-<div class="card">
-
-<div class="product-image">
-🍋
-</div>
-
-<div class="name">
-Coca-Cola Limone
-</div>
-
-<div class="type">
-Edizione limone
-</div>
-
-
-<div class="stock">
-
-<div class="stock-label">
-Disponibilità
-</div>
-
-<div class="bar">
-<div class="fill" style="width:35%"></div>
-</div>
-
-<div class="amount">
-Quasi finita
-</div>
-
-</div>
-
-</div>
-
-
-
-<!-- CHINOTTO -->
-
-<div class="card">
-
-<div class="product-image">
-🫧
-</div>
-
-<div class="name">
-Chinotto
-</div>
-
-<div class="type">
-Bibita
-</div>
-
-
-<div class="stock">
-
-<div class="stock-label">
-Disponibilità
-</div>
-
-<div class="bar">
-<div class="fill" style="width:60%"></div>
-</div>
-
-<div class="amount">
-Scorta media
-</div>
-
-</div>
-
-</div>
-
-
-
-<!-- THE -->
-
-<div class="card">
-
-<div class="product-image">
-🧋
-</div>
-
-<div class="name">
-Tè Freddo
-</div>
-
-<div class="type">
-Pesca / Limone
-</div>
-
-
-<div class="stock">
-
-<div class="stock-label">
-Disponibilità
-</div>
-
-<div class="bar">
-<div class="fill" style="width:40%"></div>
-</div>
-
-<div class="amount">
-Poche unità
-</div>
-
-</div>
-
-</div>
-
-
-</div>
-
-
 
 <!-- PANNELLI INFORMATIVI -->
 
@@ -683,7 +634,7 @@ Poche unità
 
 
 <p>
-<strong>Bevande presenti:</strong> 7
+<strong>Bevande presenti:</strong> <span id="beverage-count">0</span>
 </p>
 
 
@@ -705,6 +656,7 @@ Poche unità
 
 </div>
 
+<script type="module" src="script.js"></script>
 
 </body>
 
