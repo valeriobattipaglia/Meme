@@ -1,6 +1,25 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
+
+import { 
+getFirestore,
+collection,
+getDocs,
+addDoc,
+doc,
+updateDoc,
+deleteDoc
+} 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+import {
+getAuth,
+onAuthStateChanged,
+signOut
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 const firebaseConfig = {
   apiKey: "AIzaSyAkHOF2S_NRreXMHU1yDpc6o11r1wpxj9g",
   authDomain: "minifrigo-673a5.firebaseapp.com",
@@ -10,10 +29,8 @@ const firebaseConfig = {
   appId: "1:346725946911:web:94d4bda49c1760c315e72a",
   measurementId: "G-SQBNJC1PNB"
 };
-
 const ADULT_REDIRECT_URL = "https://www.youtube.com/watch?v=cGUTvXkMcT8";
 const ADULT_STORAGE_KEY = "minifrigo_adult_confirmed";
-const ADMIN_STORAGE_KEY = "minifrigo_admin_authenticated";
 const MAX_LITERS = 4;
 const siteShell = document.getElementById("site-shell");
 const ageGate = document.getElementById("age-gate");
@@ -42,6 +59,10 @@ let productsCache = [];
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+
+let currentUser = null;
+onAuthStateChanged(auth,(user)=>{currentUser=user;syncAdminUI();});
 
 function getProductName(data, docId) {
   return data.Nome || data.nome || data.name || docId;
@@ -139,31 +160,40 @@ function setUpdateTimestamp() {
   })}`;
 }
 
-function syncAdminUI() {
-  const isAdmin = localStorage.getItem(ADMIN_STORAGE_KEY) === "true";
+function syncAdminUI(){
 
-  if (adminPanel) {
-    adminPanel.classList.toggle("hidden", !isAdmin);
-  }
+    const isAdmin = currentUser !== null;
 
-  if (adminLink) {
-    adminLink.textContent = isAdmin ? "🔓" : "🔐";
-    adminLink.title = isAdmin ? "Esci dall'admin" : "Area admin";
-    adminLink.classList.toggle("logged-in", isAdmin);
-  }
+    if(adminPanel){
+
+        adminPanel.classList.toggle("hidden",!isAdmin);
+    }
+
+    if(adminLink){
+        adminLink.textContent =isAdmin ? "🔓" : "🔐";
+        adminLink.title =isAdmin? "Logout admin": "Area admin";
+    }
 }
 
-function handleAdminLinkClick(event) {
-  const isAdmin = localStorage.getItem(ADMIN_STORAGE_KEY) === "true";
+async function handleAdminLinkClick(event) {
 
-  if (isAdmin) {
-    event.preventDefault();
-    localStorage.removeItem(ADMIN_STORAGE_KEY);
-    syncAdminUI();
-    if (availabilityMessage) {
-      availabilityMessage.textContent = "Logout eseguito.";
+    if(currentUser){
+
+        event.preventDefault();
+
+        await signOut(auth);
+
+        currentUser = null;
+
+        syncAdminUI();
+
+        if(availabilityMessage){
+            availabilityMessage.textContent =
+            "Logout eseguito.";
+        }
+
     }
-  }
+
 }
 
 async function loadProducts() {
@@ -177,14 +207,10 @@ async function loadProducts() {
     setUpdateTimestamp();
     updateOnlineStatus(true);
 
-    if (adminProductSelect && adminProductSelect.tagName === "SELECT") {
-      adminProductSelect.innerHTML = "";
-      productsCache.forEach((product) => {
-        const option = document.createElement("option");
-        option.value = product.id;
-        option.textContent = getProductName(product.data, product.id);
-        adminProductSelect.appendChild(option);
-      });
+    if(adminProductSelect){
+
+        adminProductSelect.value="";
+
     }
   } catch (error) {
     console.error("Firebase error:", error);
@@ -266,16 +292,15 @@ function syncSelectedProductDetails() {
 }
 
 function openEditModal(productId) {
-  if (!editModal || !adminProductSelect || !adminProductIdInput) {
+
+  if (!editModal || !adminProductIdInput) {
     return;
   }
 
-  const isAdmin = localStorage.getItem(ADMIN_STORAGE_KEY) === "true";
-  if (!isAdmin) {
-    window.location.href = "admin.html";
+  if(!currentUser){
+    window.location.href="admin.html";
     return;
   }
-
   adminProductIdInput.value = productId;
   syncSelectedProductDetails();
   editModal.classList.remove("hidden");
