@@ -125,9 +125,38 @@ header{
     justify-content:space-between;
     align-items:center;
     margin-bottom:40px;
+    position:relative;
 
 }
 
+.admin-link{
+    position:absolute;
+    left:0;
+    top:0;
+    text-decoration:none;
+    font-size:28px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--border);
+    color:var(--text);
+    box-shadow:0 10px 22px rgba(0,0,0,.2);
+    transition:.25s ease;
+}
+
+.admin-link.logged-in{
+    background:rgba(67, 226, 138, 0.18);
+    border-color:rgba(67, 226, 138, 0.6);
+    box-shadow:0 10px 26px rgba(67, 226, 138, 0.18);
+}
+
+.logo{
+    margin-left:58px;
+}
 
 .logo h1{
 
@@ -323,8 +352,81 @@ header{
 
 /* ADMIN */
 
+.edit-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(3, 6, 12, 0.86);
+    display:grid;
+    place-items:center;
+    padding:20px;
+    z-index:100;
+}
+
+.edit-card{
+    width:min(560px, 100%);
+    background:linear-gradient(145deg, rgba(85, 199, 255, 0.12), rgba(255,255,255,.05));
+    border:1px solid rgba(85, 199, 255, 0.34);
+    border-radius:26px;
+    padding:24px;
+    box-shadow:0 24px 80px rgba(0,0,0,.45);
+}
+
+.edit-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+}
+
+.edit-header h2{
+    font-size:24px;
+}
+
+.close-button{
+    border:none;
+    background:transparent;
+    color:var(--text);
+    font-size:34px;
+    cursor:pointer;
+    line-height:1;
+}
+
 .admin-panel{
     margin-top:24px;
+}
+
+.edit-card .admin-row{
+    margin-bottom:14px;
+}
+
+.edit-card input,
+.edit-card select,
+.edit-card button{
+    width:100%;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.12);
+    padding:12px 14px;
+    font-size:15px;
+}
+
+.edit-card input,
+.edit-card select{
+    background:#0d1420;
+    color:var(--text);
+}
+
+.edit-card button{
+    background:linear-gradient(135deg, var(--ice), #74dbff);
+    color:#07111b;
+    font-weight:800;
+    cursor:pointer;
+    margin-top:8px;
+}
+
+.delete-button{
+    background:linear-gradient(135deg, #ff6b7b, #ff425a) !important;
+    color:#fff !important;
+    border-color:rgba(255, 107, 123, 0.6) !important;
 }
 
 .admin-panel form{
@@ -463,6 +565,8 @@ header{
 
 <header>
 
+<a class="admin-link" href="admin.html" title="Area admin">🔐</a>
+
 <div class="logo">
 
 <h1>🧊 MiniFrigo</h1>
@@ -497,7 +601,7 @@ Ultimo aggiornamento<br>
 
 <div id="drink-grid" class="grid"></div>
 
-<div class="panel admin-panel">
+<div id="admin-panel" class="panel admin-panel hidden">
     <h2>🛠️ Admin • aggiungi bevanda</h2>
     <form id="admin-form">
         <div class="admin-row">
@@ -551,34 +655,6 @@ Ultimo aggiornamento<br>
         </div>
         <button type="submit">Salva su Firebase</button>
         <div id="admin-message" class="admin-message"></div>
-    </form>
-</div>
-
-<div class="panel admin-panel">
-    <h2>🛠️ Admin • modifica disponibilità</h2>
-    <form id="availability-form">
-        <div class="admin-row">
-            <div>
-                <label for="admin-product">Bevanda</label>
-                <select id="admin-product" name="admin-product" required></select>
-            </div>
-            <div>
-                <label for="admin-quantita">Numero bottiglie</label>
-                <input id="admin-quantita" name="admin-quantita" type="number" min="0" max="20" step="1" value="1" required>
-            </div>
-        </div>
-        <div class="admin-row">
-            <div>
-                <label for="admin-litri-unita">Litri singola bottiglia</label>
-                <input id="admin-litri-unita" name="admin-litri-unita" type="text" value="0.33 L" disabled>
-            </div>
-            <div>
-                <label for="admin-litri-totali">Litri totali stimati</label>
-                <input id="admin-litri-totali" name="admin-litri-totali" type="text" value="0.33 L" disabled>
-            </div>
-        </div>
-        <button type="submit">Aggiorna disponibilità</button>
-        <div id="availability-message" class="admin-message"></div>
     </form>
 </div>
 
@@ -654,6 +730,41 @@ Ultimo aggiornamento<br>
 </div>
 
 
+</div>
+
+<div id="edit-modal" class="edit-modal hidden">
+    <div class="edit-card">
+        <div class="edit-header">
+            <h2>✏️ Modifica disponibilità</h2>
+            <button type="button" id="close-edit-modal" class="close-button" aria-label="Chiudi">×</button>
+        </div>
+        <form id="availability-form">
+            <div class="admin-row">
+                <div>
+                    <label for="admin-product">Bevanda</label>
+                    <input id="admin-product" name="admin-product" type="text" value="" readonly>
+                    <input id="admin-product-id" name="admin-product-id" type="hidden" value="">
+                </div>
+                <div>
+                    <label for="admin-quantita">Numero bottiglie</label>
+                    <input id="admin-quantita" name="admin-quantita" type="number" min="0" max="20" step="1" value="1" required>
+                </div>
+            </div>
+            <div class="admin-row">
+                <div>
+                    <label for="admin-litri-unita">Litri singola bottiglia</label>
+                    <input id="admin-litri-unita" name="admin-litri-unita" type="text" value="0.33 L" disabled>
+                </div>
+                <div>
+                    <label for="admin-litri-totali">Litri totali stimati</label>
+                    <input id="admin-litri-totali" name="admin-litri-totali" type="text" value="0.33 L" disabled>
+                </div>
+            </div>
+            <button type="submit">Aggiorna disponibilità</button>
+            <button type="button" id="delete-product-button" class="delete-button">Elimina bevanda</button>
+            <div id="availability-message" class="admin-message"></div>
+        </form>
+    </div>
 </div>
 
 <script type="module" src="script.js"></script>

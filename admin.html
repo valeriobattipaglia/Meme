@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MiniFrigo • Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#080b12;
+      --card:#121823;
+      --border:#263247;
+      --text:#f5f7fb;
+      --muted:#8d99aa;
+      --ice:#55c7ff;
+      --green:#43e28a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at top, #162b42 0%, transparent 35%), linear-gradient(180deg, #080b12, #0d111a);
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .panel {
+      width: min(420px, 100%);
+      background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    }
+
+    h1 { margin-bottom: 8px; font-size: 32px; }
+    p { color: var(--muted); line-height: 1.7; margin-bottom: 18px; }
+    label { display:block; font-size:13px; color: var(--muted); margin-bottom: 6px; }
+    input, button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      font-size: 15px;
+    }
+    input { background: #0c1320; color: var(--text); }
+    button { background: var(--ice); color: #07111b; font-weight: 700; cursor: pointer; margin-top: 10px; }
+    .error { color: #ff9d9d; margin-top: 10px; min-height: 20px; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>🔐 Admin</h1>
+    <p>Inserisci la password per entrare nell’area di modifica delle bevande.</p>
+    <form id="admin-login-form">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Password admin" required>
+      <button type="submit">Accedi</button>
+      <div id="login-error" class="error"></div>
+    </form>
+  </div>
+
+  <script>
+    const ADMIN_PASSWORD = "minifrigo123";
+    const loginForm = document.getElementById("admin-login-form");
+    const loginError = document.getElementById("login-error");
+    const passwordInput = document.getElementById("password");
+
+    loginForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (passwordInput.value === ADMIN_PASSWORD) {
+        localStorage.setItem("minifrigo_admin_authenticated", "true");
+        window.location.href = "index.html";
+      } else {
+        loginError.textContent = "Password errata.";
+      }
+    });
+  </script>
+</body>
+</html>

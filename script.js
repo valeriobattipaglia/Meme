@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAkHOF2S_NRreXMHU1yDpc6o11r1wpxj9g",
@@ -13,6 +13,7 @@ const firebaseConfig = {
 
 const ADULT_REDIRECT_URL = "https://www.youtube.com/watch?v=cGUTvXkMcT8";
 const ADULT_STORAGE_KEY = "minifrigo_adult_confirmed";
+const ADMIN_STORAGE_KEY = "minifrigo_admin_authenticated";
 const MAX_LITERS = 4;
 const siteShell = document.getElementById("site-shell");
 const ageGate = document.getElementById("age-gate");
@@ -22,9 +23,15 @@ const updateLabel = document.getElementById("last-update");
 const onlineStatus = document.getElementById("online-status");
 const adminForm = document.getElementById("admin-form");
 const adminMessage = document.getElementById("admin-message");
+const adminPanel = document.getElementById("admin-panel");
+const adminLink = document.querySelector(".admin-link");
+const editModal = document.getElementById("edit-modal");
+const closeEditModal = document.getElementById("close-edit-modal");
 const availabilityForm = document.getElementById("availability-form");
 const availabilityMessage = document.getElementById("availability-message");
 const adminProductSelect = document.getElementById("admin-product");
+const adminProductIdInput = document.getElementById("admin-product-id");
+const deleteProductButton = document.getElementById("delete-product-button");
 const adminQuantityInput = document.getElementById("admin-quantita");
 const adminSingleLitersInput = document.getElementById("admin-litri-unita");
 const adminTotalLitersInput = document.getElementById("admin-litri-totali");
@@ -132,6 +139,33 @@ function setUpdateTimestamp() {
   })}`;
 }
 
+function syncAdminUI() {
+  const isAdmin = localStorage.getItem(ADMIN_STORAGE_KEY) === "true";
+
+  if (adminPanel) {
+    adminPanel.classList.toggle("hidden", !isAdmin);
+  }
+
+  if (adminLink) {
+    adminLink.textContent = isAdmin ? "🔓" : "🔐";
+    adminLink.title = isAdmin ? "Esci dall'admin" : "Area admin";
+    adminLink.classList.toggle("logged-in", isAdmin);
+  }
+}
+
+function handleAdminLinkClick(event) {
+  const isAdmin = localStorage.getItem(ADMIN_STORAGE_KEY) === "true";
+
+  if (isAdmin) {
+    event.preventDefault();
+    localStorage.removeItem(ADMIN_STORAGE_KEY);
+    syncAdminUI();
+    if (availabilityMessage) {
+      availabilityMessage.textContent = "Logout eseguito.";
+    }
+  }
+}
+
 async function loadProducts() {
   try {
     const querySnapshot = await getDocs(collection(db, "Prodotti"));
@@ -143,7 +177,7 @@ async function loadProducts() {
     setUpdateTimestamp();
     updateOnlineStatus(true);
 
-    if (adminProductSelect) {
+    if (adminProductSelect && adminProductSelect.tagName === "SELECT") {
       adminProductSelect.innerHTML = "";
       productsCache.forEach((product) => {
         const option = document.createElement("option");
@@ -205,11 +239,11 @@ async function saveProduct(event) {
 }
 
 function syncSelectedProductDetails() {
-  if (!adminProductSelect || !adminQuantityInput || !adminSingleLitersInput || !adminTotalLitersInput) {
+  if ((!adminProductSelect && !adminProductIdInput) || !adminQuantityInput || !adminSingleLitersInput || !adminTotalLitersInput) {
     return;
   }
 
-  const selectedId = adminProductSelect.value;
+  const selectedId = adminProductIdInput?.value || adminProductSelect?.value;
   const selected = productsCache.find((item) => item.id === selectedId);
   if (!selected) {
     return;
@@ -220,15 +254,67 @@ function syncSelectedProductDetails() {
   const bottleSize = getBottleSize(data);
   const totalLiters = Math.min(MAX_LITERS, quantity * bottleSize);
 
+  if (adminProductSelect) {
+    adminProductSelect.value = getProductName(data, selected.id);
+  }
+  if (adminProductIdInput) {
+    adminProductIdInput.value = selected.id;
+  }
   adminQuantityInput.value = String(quantity);
   adminSingleLitersInput.value = `${bottleSize.toFixed(2)} L`;
   adminTotalLitersInput.value = `${totalLiters.toFixed(2)} L`;
 }
 
+function openEditModal(productId) {
+  if (!editModal || !adminProductSelect || !adminProductIdInput) {
+    return;
+  }
+
+  const isAdmin = localStorage.getItem(ADMIN_STORAGE_KEY) === "true";
+  if (!isAdmin) {
+    window.location.href = "admin.html";
+    return;
+  }
+
+  adminProductIdInput.value = productId;
+  syncSelectedProductDetails();
+  editModal.classList.remove("hidden");
+}
+
+async function deleteSelectedProduct() {
+  const productId = adminProductIdInput?.value;
+  if (!productId) {
+    return;
+  }
+
+  const selected = productsCache.find((item) => item.id === productId);
+  const productName = selected ? getProductName(selected.data, productId) : "questa bevanda";
+  const confirmed = window.confirm(`Eliminare definitivamente ${productName}?`);
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(db, "Prodotti", productId));
+    availabilityMessage.textContent = `Bevanda eliminata: ${productName}`;
+    closeEditModalHandler();
+    await loadProducts();
+  } catch (error) {
+    console.error("Delete error:", error);
+    availabilityMessage.textContent = "Eliminazione non riuscita. Controlla le regole Firestore.";
+  }
+}
+
+function closeEditModalHandler() {
+  if (editModal) {
+    editModal.classList.add("hidden");
+  }
+}
+
 async function updateProductAvailability(event) {
   event.preventDefault();
 
-  const productId = adminProductSelect.value;
+  const productId = adminProductIdInput?.value;
   const quantity = Math.max(0, Number(adminQuantityInput.value) || 0);
 
   if (!productId) {
@@ -245,6 +331,7 @@ async function updateProductAvailability(event) {
       LitriUnita: bottleSize
     });
     availabilityMessage.textContent = "Disponibilità aggiornata.";
+    closeEditModalHandler();
     await loadProducts();
   } catch (error) {
     console.error("Update error:", error);
@@ -256,6 +343,7 @@ function grantAccess() {
   sessionStorage.setItem(ADULT_STORAGE_KEY, "yes");
   ageGate.classList.add("hidden");
   siteShell.classList.remove("hidden");
+  syncAdminUI();
   loadProducts();
 }
 
@@ -275,6 +363,7 @@ function updateOnlineStatus(isOnline) {
 
 function initAgeGate() {
   const storedChoice = sessionStorage.getItem(ADULT_STORAGE_KEY);
+  syncAdminUI();
 
   if (storedChoice === "yes") {
     ageGate.classList.add("hidden");
@@ -308,13 +397,33 @@ if (availabilityForm) {
   availabilityForm.addEventListener("submit", updateProductAvailability);
 }
 
-if (adminProductSelect) {
+if (adminProductSelect && adminProductSelect.tagName === "SELECT") {
   adminProductSelect.addEventListener("change", syncSelectedProductDetails);
+}
+
+if (deleteProductButton) {
+  deleteProductButton.addEventListener("click", deleteSelectedProduct);
 }
 
 if (addQuantityInput && addSingleLitersSelect) {
   addQuantityInput.addEventListener("input", updateAddPreview);
   addSingleLitersSelect.addEventListener("change", updateAddPreview);
+}
+
+if (adminLink) {
+  adminLink.addEventListener("click", handleAdminLinkClick);
+}
+
+if (closeEditModal) {
+  closeEditModal.addEventListener("click", closeEditModalHandler);
+}
+
+if (editModal) {
+  editModal.addEventListener("click", (event) => {
+    if (event.target === editModal) {
+      closeEditModalHandler();
+    }
+  });
 }
 
 if (drinkGrid) {
@@ -325,13 +434,11 @@ if (drinkGrid) {
     }
 
     const selectedId = card.dataset.docId;
-    if (!selectedId || !adminProductSelect) {
+    if (!selectedId) {
       return;
     }
 
-    adminProductSelect.value = selectedId;
-    syncSelectedProductDetails();
-    availabilityMessage.textContent = "Selezionata la bevanda. Modifica il numero di bottiglie e salva.";
+    openEditModal(selectedId);
   });
 }
 
