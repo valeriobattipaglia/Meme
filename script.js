@@ -38,6 +38,7 @@ const drinkGrid = document.getElementById("drink-grid");
 const beverageCount = document.getElementById("beverage-count");
 const updateLabel = document.getElementById("last-update");
 const onlineStatus = document.getElementById("online-status");
+const footerOnlineStatus = document.getElementById("footer-online-status");
 const adminForm = document.getElementById("admin-form");
 const adminMessage = document.getElementById("admin-message");
 const adminPanel = document.getElementById("admin-panel");
@@ -203,9 +204,12 @@ async function loadProducts() {
     const querySnapshot = await getDocs(collection(db, "Prodotti"));
     productsCache = querySnapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
     const items = querySnapshot.docs.map((doc) => renderCard(doc)).join("");
+    console.log(productsCache);
+    numeroBottiglie = productsCache.reduce((totale, prodotto) => { return totale + prodotto.Quantita;}, 0);
+    console.log("Numero di bottiglie:", numeroBottiglie);
 
     drinkGrid.innerHTML = items;
-    beverageCount.textContent = String(querySnapshot.size);
+    beverageCount.textContent = numeroBottiglie;
     setUpdateTimestamp();
     updateOnlineStatus(true);
 
@@ -383,7 +387,7 @@ function updateOnlineStatus(isOnline) {
   if (!onlineStatus) {
     return;
   }
-
+  footerOnlineStatus.textContent = isOnline ? " Operativo" : " Offline";
   onlineStatus.textContent = isOnline ? "● ONLINE" : "● OFFLINE";
   onlineStatus.style.color = isOnline ? "#43e28a" : "#ff7488";
 }
