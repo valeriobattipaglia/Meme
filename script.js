@@ -200,17 +200,27 @@ async function handleAdminLinkClick(event) {
 }
 
 async function loadProducts() {
-  try {
-    const querySnapshot = await getDocs(collection(db, "Prodotti"));
-    productsCache = querySnapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
-    const items = querySnapshot.docs.map((doc) => renderCard(doc)).join("");
-    console.log(productsCache);
-    numeroBottiglie = productsCache.reduce((totale, prodotto) => { return totale + prodotto.Quantita;}, 0);
-    console.log("Numero di bottiglie:", numeroBottiglie);
+    try {
+        const querySnapshot = await getDocs(collection(db, "Prodotti"));
+        productsCache = querySnapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
 
-    drinkGrid.innerHTML = items;
-    beverageCount.textContent = numeroBottiglie;
-    setUpdateTimestamp();
+        console.log(productsCache);
+
+        const numeroBottiglie = productsCache.reduce((totale, prodotto) => {
+            return totale + (Number(prodotto.data.Quantita) || 0);
+        }, 0);
+
+
+        const items = querySnapshot.docs.map((doc) => renderCard(doc)).join("");
+
+        drinkGrid.innerHTML = items;
+        beverageCount.textContent = numeroBottiglie;
+
+    } catch (firebaseError) {
+        console.error("Errore caricamento Firestore:", firebaseError);
+    }
+
+try {    setUpdateTimestamp();
     updateOnlineStatus(true);
 
     if(adminProductSelect){
@@ -223,8 +233,8 @@ async function loadProducts() {
     drinkGrid.innerHTML = `<div class="card"><div class="name">Errore caricamento</div><div class="type">Impossibile leggere il database Firestore.</div></div>`;
     updateOnlineStatus(false);
   }
+    
 }
-
 function updateAddPreview() {
   if (!addPreviewLitersInput || !addQuantityInput || !addSingleLitersSelect) {
     return;
