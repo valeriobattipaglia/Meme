@@ -60,10 +60,12 @@ let productsCache = [];
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-
 let currentUser = null;
-onAuthStateChanged(auth,(user)=>{currentUser=user;syncAdminUI();});
 
+onAuthStateChanged(auth,(user)=>{
+    currentUser=user;
+    syncAdminUI();
+});
 function getProductName(data, docId) {
   return data.Nome || data.nome || data.name || docId;
 }
