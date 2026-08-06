@@ -35,12 +35,15 @@ const MAX_LITERS = 4;
 const siteShell = document.getElementById("site-shell");
 const ageGate = document.getElementById("age-gate");
 const drinkGrid = document.getElementById("drink-grid");
+const snackGrid = document.getElementById("snack-grid");
 const beverageCount = document.getElementById("beverage-count");
 const updateLabel = document.getElementById("last-update");
 const onlineStatus = document.getElementById("online-status");
 const footerOnlineStatus = document.getElementById("footer-online-status");
 const adminForm = document.getElementById("admin-form");
+const snackForm = document.getElementById("snack-form");
 const adminMessage = document.getElementById("admin-message");
+const snackMessage = document.getElementById("snack-message");
 const adminPanel = document.getElementById("admin-panel");
 const adminLink = document.querySelector(".admin-link");
 const editModal = document.getElementById("edit-modal");
@@ -57,6 +60,7 @@ const addPreviewLitersInput = document.getElementById("add-preview-litri");
 const addQuantityInput = document.getElementById("quantita");
 const addSingleLitersSelect = document.getElementById("litri-unita");
 let productsCache = [];
+let snacksCache = [];
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -154,6 +158,52 @@ function renderCard(doc) {
   `;
 }
 
+function getSnackName(data, docId) {
+  return data.Nome || data.nome || data.name || docId;
+}
+
+function getSnackBagCount(data) {
+  const possibleKeys = ["NumeroBuste", "numeroBuste", "Buste", "buste", "Confezioni", "confezioni"];
+  for (const key of possibleKeys) {
+    const value = Number(data[key]);
+    if (!Number.isNaN(value)) {
+      return Math.max(0, value);
+    }
+  }
+  return 0;
+}
+
+function getSnackQuantityPerBag(data) {
+  const possibleKeys = ["QuantitaBusta", "quantitaBusta", "QuantitaPerBusta", "quantitaPerBusta", "Quantita", "quantita"];
+  for (const key of possibleKeys) {
+    const value = Number(data[key]);
+    if (!Number.isNaN(value)) {
+      return Math.max(0, value);
+    }
+  }
+  return 0;
+}
+
+function renderSnackCard(doc) {
+  const data = typeof doc.data === "function" ? doc.data() : doc.data;
+  const snackId = doc.id || doc.docId;
+  const snackName = getSnackName(data, snackId);
+  const bagCount = getSnackBagCount(data);
+  const quantityPerBag = getSnackQuantityPerBag(data);
+
+  return `
+    <article class="card snack-card" data-doc-id="${snackId}" data-kind="snack">
+      <div class="product-image">🥨</div>
+      <div class="name">${snackName}</div>
+      <div class="type">Snack</div>
+      <div class="stock">
+        <div class="stock-label">Disponibilità</div>
+        <div class="amount">${bagCount} buste • ${quantityPerBag} pezzi per busta</div>
+      </div>
+    </article>
+  `;
+}
+
 function setUpdateTimestamp() {
   const now = new Date();
   updateLabel.innerHTML = `Ultimo aggiornamento<br>${now.toLocaleDateString("it-IT", {
@@ -200,40 +250,45 @@ async function handleAdminLinkClick(event) {
 }
 
 async function loadProducts() {
-    try {
-        const querySnapshot = await getDocs(collection(db, "Prodotti"));
-        productsCache = querySnapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
+  try {
+    const beverageSnapshot = await getDocs(collection(db, "Prodotti"));
+    const snackSnapshot = await getDocs(collection(db, "Snack"));
 
-        console.log(productsCache);
+    productsCache = beverageSnapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
+    snacksCache = snackSnapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() }));
 
-        const numeroBottiglie = productsCache.reduce((totale, prodotto) => {
-            return totale + (Number(prodotto.data.Quantita) || 0);
-        }, 0);
+    const numeroBottiglie = productsCache.reduce((totale, prodotto) => {
+      return totale + getBottleQuantity(prodotto.data);
+    }, 0);
 
+    const items = beverageSnapshot.docs.map((doc) => renderCard(doc)).join("");
+    const snackItems = snackSnapshot.docs.map((doc) => renderSnackCard(doc)).join("");
 
-        const items = querySnapshot.docs.map((doc) => renderCard(doc)).join("");
-
-        drinkGrid.innerHTML = items;
-        beverageCount.textContent = numeroBottiglie;
-
-    } catch (firebaseError) {
-        console.error("Errore caricamento Firestore:", firebaseError);
+    if (drinkGrid) {
+      drinkGrid.innerHTML = items || `<div class="card"><div class="name">Nessuna bevanda</div><div class="type">Aggiungi una nuova voce dal pannello admin.</div></div>`;
     }
 
-try {    setUpdateTimestamp();
+    if (snackGrid) {
+      snackGrid.innerHTML = snackItems || `<div class="card"><div class="name">Nessuno snack</div><div class="type">Aggiungi uno snack dal pannello admin.</div></div>`;
+    }
+
+    beverageCount.textContent = String(numeroBottiglie);
+    setUpdateTimestamp();
     updateOnlineStatus(true);
 
-    if(adminProductSelect){
-
-        adminProductSelect.value="";
-
+    if (adminProductSelect) {
+      adminProductSelect.value = "";
     }
-  } catch (error) {
-    console.error("Firebase error:", error);
-    drinkGrid.innerHTML = `<div class="card"><div class="name">Errore caricamento</div><div class="type">Impossibile leggere il database Firestore.</div></div>`;
+  } catch (firebaseError) {
+    console.error("Errore caricamento Firestore:", firebaseError);
+    if (drinkGrid) {
+      drinkGrid.innerHTML = `<div class="card"><div class="name">Errore caricamento</div><div class="type">Impossibile leggere il database Firestore.</div></div>`;
+    }
+    if (snackGrid) {
+      snackGrid.innerHTML = `<div class="card"><div class="name">Errore caricamento</div><div class="type">Impossibile leggere il database snack.</div></div>`;
+    }
     updateOnlineStatus(false);
   }
-    
 }
 function updateAddPreview() {
   if (!addPreviewLitersInput || !addQuantityInput || !addSingleLitersSelect) {
@@ -277,6 +332,32 @@ async function saveProduct(event) {
   } catch (error) {
     console.error("Write error:", error);
     adminMessage.textContent = "Salvataggio non riuscito. Controlla le regole Firestore.";
+  }
+}
+
+async function saveSnack(event) {
+  event.preventDefault();
+
+  const formData = new FormData(snackForm);
+  const payload = {
+    Nome: String(formData.get("snack-nome") || "").trim(),
+    NumeroBuste: Math.max(0, Number(formData.get("snack-buste") || 0)),
+    QuantitaBusta: Math.max(0, Number(formData.get("snack-quantita-busta") || 0))
+  };
+
+  if (!payload.Nome) {
+    snackMessage.textContent = "Inserisci il nome dello snack.";
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "Snack"), payload);
+    snackMessage.textContent = `Snack aggiunto: ${payload.Nome}`;
+    snackForm.reset();
+    await loadProducts();
+  } catch (error) {
+    console.error("Snack write error:", error);
+    snackMessage.textContent = "Salvataggio snack non riuscito. Controlla le regole Firestore.";
   }
 }
 
@@ -434,6 +515,10 @@ if (adminForm) {
   adminForm.addEventListener("submit", saveProduct);
 }
 
+if (snackForm) {
+  snackForm.addEventListener("submit", saveSnack);
+}
+
 if (availabilityForm) {
   availabilityForm.addEventListener("submit", updateProductAvailability);
 }
@@ -470,7 +555,7 @@ if (editModal) {
 if (drinkGrid) {
   drinkGrid.addEventListener("click", (event) => {
     const card = event.target.closest(".card");
-    if (!card) {
+    if (!card || card.dataset.kind === "snack") {
       return;
     }
 
