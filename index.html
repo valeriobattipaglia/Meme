@@ -387,11 +387,42 @@ header{
 
 .close-button{
     border:none;
-    background:transparent;
+    background:rgba(255,255,255,.08);
     color:var(--text);
-    font-size:34px;
+    font-size:22px;
+    width:40px;
+    height:40px;
+    border-radius:14px;
     cursor:pointer;
     line-height:1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.stepper{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.stepper-button{
+    width:36px;
+    height:36px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.06);
+    color:var(--text);
+    font-size:20px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.stepper input{
+    flex:1;
+    min-width:0;
 }
 
 .admin-panel{
@@ -702,13 +733,21 @@ Ultimo aggiornamento<br>
             </div>
             <div>
                 <label for="snack-buste">Numero buste</label>
-                <input id="snack-buste" name="snack-buste" type="number" min="0" step="1" value="3" required>
+                <div class="stepper">
+                    <button type="button" class="stepper-button" data-step="-1" data-target="snack-buste">−</button>
+                    <input id="snack-buste" name="snack-buste" type="number" min="0" step="1" value="3" required>
+                    <button type="button" class="stepper-button" data-step="1" data-target="snack-buste">+</button>
+                </div>
             </div>
         </div>
         <div class="admin-row">
             <div>
                 <label for="snack-quantita-busta">Quantità per busta</label>
-                <input id="snack-quantita-busta" name="snack-quantita-busta" type="number" min="0" step="1" value="12" required>
+                <div class="stepper">
+                    <button type="button" class="stepper-button" data-step="-1" data-target="snack-quantita-busta">−</button>
+                    <input id="snack-quantita-busta" name="snack-quantita-busta" type="number" min="0" step="1" value="12" required>
+                    <button type="button" class="stepper-button" data-step="1" data-target="snack-quantita-busta">+</button>
+                </div>
             </div>
             <div>
                 <label>&nbsp;</label>
@@ -801,7 +840,7 @@ Ultimo aggiornamento<br>
     <div class="edit-card">
         <div class="edit-header">
             <h2>✏️ Modifica disponibilità</h2>
-            <button type="button" id="close-edit-modal" class="close-button" aria-label="Chiudi">×</button>
+            <button type="button" id="close-edit-modal" class="close-button" aria-label="Chiudi">✕</button>
         </div>
         <form id="availability-form">
             <div class="admin-row">
@@ -812,7 +851,11 @@ Ultimo aggiornamento<br>
                 </div>
                 <div>
                     <label for="admin-quantita">Numero bottiglie</label>
-                    <input id="admin-quantita" name="admin-quantita" type="number" min="0" max="20" step="1" value="1" required>
+                    <div class="stepper">
+                        <button type="button" class="stepper-button" data-step="-1" data-target="admin-quantita">−</button>
+                        <input id="admin-quantita" name="admin-quantita" type="number" min="0" max="20" step="1" value="1" required>
+                        <button type="button" class="stepper-button" data-step="1" data-target="admin-quantita">+</button>
+                    </div>
                 </div>
             </div>
             <div class="admin-row">

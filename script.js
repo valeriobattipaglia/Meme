@@ -531,6 +531,22 @@ if (deleteProductButton) {
   deleteProductButton.addEventListener("click", deleteSelectedProduct);
 }
 
+document.querySelectorAll(".stepper-button").forEach((button) => {
+  button.addEventListener("click", (event) => {
+    const step = Number(event.currentTarget.dataset.step) || 0;
+    const targetId = event.currentTarget.dataset.target;
+    const target = document.getElementById(targetId);
+    if (!target || target.type !== "number") {
+      return;
+    }
+    const min = Number(target.min) || 0;
+    const max = Number(target.max) || Infinity;
+    const value = Math.max(min, Math.min(max, Number(target.value) + step));
+    target.value = value;
+    target.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+});
+
 if (addQuantityInput && addSingleLitersSelect) {
   addQuantityInput.addEventListener("input", updateAddPreview);
   addSingleLitersSelect.addEventListener("change", updateAddPreview);
