@@ -208,6 +208,9 @@ header{
 
 }
 
+.section-block{
+    margin-bottom:32px;
+}
 
 
 /* CARD BEVANDE */
@@ -542,7 +545,37 @@ header{
 
 
 
-/* FOOTER VOLUTAMENTE VUOTO */
+/* FOOTER */
+
+.donations-footer{
+    margin-top:42px;
+    padding:22px 24px;
+    border:1px solid var(--border);
+    border-radius:20px;
+    background:linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
+}
+
+.donations-footer p{
+    color:var(--muted);
+    line-height:1.6;
+}
+
+.donation-button{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 18px;
+    border-radius:999px;
+    background:linear-gradient(135deg, var(--ice), #74dbff);
+    color:#07111b;
+    font-weight:800;
+    text-decoration:none;
+}
 
 </style>
 
@@ -595,11 +628,15 @@ Ultimo aggiornamento<br>
 </header>
 
 
-<h2 class="section-title">
-🥤 Bevande disponibili
-</h2>
+<section class="section-block">
+    <h2 class="section-title">🥤 Bevande in stock</h2>
+    <div id="drink-grid" class="grid"></div>
+</section>
 
-<div id="drink-grid" class="grid"></div>
+<section class="section-block">
+    <h2 class="section-title">🥨 Snack</h2>
+    <div id="snack-grid" class="grid"></div>
+</section>
 
 <div id="admin-panel" class="panel admin-panel hidden">
     <h2>🛠️ Admin • aggiungi bevanda</h2>
@@ -656,6 +693,30 @@ Ultimo aggiornamento<br>
         <button type="submit">Salva su Firebase</button>
         <div id="admin-message" class="admin-message"></div>
     </form>
+
+    <form id="snack-form" class="snack-form">
+        <div class="admin-row">
+            <div>
+                <label for="snack-nome">Nome snack</label>
+                <input id="snack-nome" name="snack-nome" type="text" placeholder="es. Patatine" required>
+            </div>
+            <div>
+                <label for="snack-buste">Numero buste</label>
+                <input id="snack-buste" name="snack-buste" type="number" min="0" step="1" value="3" required>
+            </div>
+        </div>
+        <div class="admin-row">
+            <div>
+                <label for="snack-quantita-busta">Quantità per busta</label>
+                <input id="snack-quantita-busta" name="snack-quantita-busta" type="number" min="0" step="1" value="12" required>
+            </div>
+            <div>
+                <label>&nbsp;</label>
+                <button type="submit">Salva snack su Firebase</button>
+            </div>
+        </div>
+        <div id="snack-message" class="admin-message"></div>
+    </form>
 </div>
 
 <!-- PANNELLI INFORMATIVI -->
@@ -709,7 +770,7 @@ Ultimo aggiornamento<br>
 
 
 <p>
-<strong>Bevande presenti:</strong> <span id="beverage-count">0</span>
+<strong>Bottiglie totali:</strong> <span id="beverage-count">0</span>
 </p>
 
 
@@ -730,6 +791,11 @@ Ultimo aggiornamento<br>
 
 
 </div>
+
+<footer class="donations-footer">
+    <p>Se vuoi supportare il progetto, fai una donazione.</p>
+    <a id="donation-link" class="donation-button" href="https://example.com" target="_blank" rel="noopener">Donazioni</a>
+</footer>
 
 <div id="edit-modal" class="edit-modal hidden">
     <div class="edit-card">
