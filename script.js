@@ -349,7 +349,7 @@ async function saveSnack(event) {
     snackMessage.textContent = "Inserisci il nome dello snack.";
     return;
   }
-
+ 
   try {
     await addDoc(collection(db, "Snack"), payload);
     snackMessage.textContent = `Snack aggiunto: ${payload.Nome}`;
