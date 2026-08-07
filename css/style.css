@@ -1,0 +1,596 @@
+:root{
+    --bg:#080b12;
+    --card:#121823;
+    --card-light:#182232;
+    --border:#263247;
+    --text:#f5f7fb;
+    --muted:#8d99aa;
+    --ice:#55c7ff;
+    --green:#43e28a;
+    --yellow:#ffd34d;
+    --orange:#ff9d42;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+}
+
+body{
+
+    background:
+    radial-gradient(circle at top,#162b42 0%,transparent 35%),
+    linear-gradient(180deg,#080b12,#0d111a);
+
+    color:var(--text);
+    min-height:100vh;
+
+}
+
+.hidden{
+    display:none !important;
+}
+
+.age-gate{
+    position:fixed;
+    inset:0;
+    background:rgba(3, 6, 12, 0.88);
+    display:grid;
+    place-items:center;
+    padding:20px;
+    z-index:99;
+}
+
+.age-card{
+    width:min(460px, 100%);
+    background:linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:28px;
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+
+.age-card h2{
+    font-size:28px;
+    margin-bottom:12px;
+}
+
+.age-card p{
+    color:var(--muted);
+    line-height:1.7;
+    margin-bottom:22px;
+}
+
+.age-actions{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    flex-wrap:wrap;
+}
+
+.age-button{
+    border:none;
+    border-radius:14px;
+    padding:12px 24px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:16px;
+    transition:.2s ease;
+}
+
+.age-button:hover{
+    transform:translateY(-1px);
+}
+
+.age-button.yes{
+    background:var(--green);
+    color:#082710;
+}
+
+.age-button.no{
+    background:#ff7488;
+    color:#1b0609;
+}
+
+.container{
+
+    max-width:1000px;
+    margin:auto;
+    padding:25px;
+
+}
+
+
+/* HEADER */
+
+header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:40px;
+    position:relative;
+
+}
+
+.admin-link{
+    position:absolute;
+    left:0;
+    top:0;
+    text-decoration:none;
+    font-size:28px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--border);
+    color:var(--text);
+    box-shadow:0 10px 22px rgba(0,0,0,.2);
+    transition:.25s ease;
+}
+
+.admin-link.logged-in{
+    background:rgba(67, 226, 138, 0.18);
+    border-color:rgba(67, 226, 138, 0.6);
+    box-shadow:0 10px 26px rgba(67, 226, 138, 0.18);
+}
+
+.logo{
+    margin-left:58px;
+}
+
+.logo h1{
+
+    font-size:42px;
+    letter-spacing:-1px;
+
+}
+
+
+.logo p{
+
+    margin-top:8px;
+    color:var(--muted);
+
+}
+
+
+.status{
+
+    text-align:right;
+
+}
+
+
+.online{
+
+    color:var(--green);
+    font-weight:700;
+
+}
+
+
+.update{
+
+    margin-top:8px;
+    color:var(--muted);
+    font-size:14px;
+
+}
+
+
+
+/* TITOLI */
+
+.section-title{
+
+    font-size:26px;
+    margin-bottom:20px;
+
+}
+
+.section-block{
+    margin-bottom:32px;
+}
+
+
+/* CARD BEVANDE */
+
+
+.grid{
+
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+    gap:22px;
+
+}
+
+
+
+.card{
+
+    background:
+    linear-gradient(
+        145deg,
+        rgba(255,255,255,.05),
+        rgba(255,255,255,.01)
+    );
+
+    backdrop-filter:blur(12px);
+
+    border:1px solid var(--border);
+
+    border-radius:22px;
+
+    padding:22px;
+
+    transition:.3s;
+
+}
+
+
+
+.card:hover{
+
+    transform:translateY(-5px);
+
+    border-color:var(--ice);
+
+}
+
+
+
+.product-image{
+
+    height:130px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:70px;
+
+    margin-bottom:15px;
+
+}
+
+
+
+.name{
+
+    font-size:22px;
+    font-weight:700;
+
+}
+
+
+.type{
+
+    color:var(--muted);
+    margin-top:5px;
+
+}
+
+
+
+/* QUANTITA */
+
+
+.stock{
+
+    margin-top:20px;
+
+}
+
+
+.stock-label{
+
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:10px;
+
+}
+
+
+.bar{
+
+    height:10px;
+
+    background:#293243;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+}
+
+
+
+.fill{
+
+    height:100%;
+
+    border-radius:20px;
+
+    background:linear-gradient(
+        90deg,
+        var(--ice),
+        var(--green)
+    );
+
+}
+
+
+
+.amount{
+
+    margin-top:10px;
+
+    font-size:14px;
+
+    color:var(--green);
+
+}
+
+
+
+/* ADMIN */
+
+.edit-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(3, 6, 12, 0.86);
+    display:grid;
+    place-items:center;
+    padding:20px;
+    z-index:100;
+}
+
+.edit-card{
+    width:min(560px, 100%);
+    background:linear-gradient(145deg, rgba(85, 199, 255, 0.12), rgba(255,255,255,.05));
+    border:1px solid rgba(85, 199, 255, 0.34);
+    border-radius:26px;
+    padding:24px;
+    box-shadow:0 24px 80px rgba(0,0,0,.45);
+}
+
+.edit-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+}
+
+.edit-header h2{
+    font-size:24px;
+}
+
+.close-button{
+    border:none;
+    background:rgba(255,255,255,.08);
+    color:var(--text);
+    font-size:22px;
+    width:40px;
+    height:40px;
+    border-radius:14px;
+    cursor:pointer;
+    line-height:1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.stepper{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.stepper-button{
+    width:36px;
+    height:36px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.06);
+    color:var(--text);
+    font-size:20px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.stepper input{
+    flex:1;
+    min-width:0;
+}
+
+.admin-panel{
+    margin-top:24px;
+}
+
+.edit-card .admin-row{
+    margin-bottom:14px;
+}
+
+.edit-card input,
+.edit-card select,
+.edit-card button{
+    width:100%;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.12);
+    padding:12px 14px;
+    font-size:15px;
+}
+
+.edit-card input,
+.edit-card select{
+    background:#0d1420;
+    color:var(--text);
+}
+
+.edit-card button{
+    background:linear-gradient(135deg, var(--ice), #74dbff);
+    color:#07111b;
+    font-weight:800;
+    cursor:pointer;
+    margin-top:8px;
+}
+
+.delete-button{
+    background:linear-gradient(135deg, #ff6b7b, #ff425a) !important;
+    color:#fff !important;
+    border-color:rgba(255, 107, 123, 0.6) !important;
+}
+
+.admin-panel form{
+    display:grid;
+    gap:14px;
+}
+
+.admin-panel .admin-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:12px;
+}
+
+.admin-panel label{
+    display:block;
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:6px;
+}
+
+.admin-panel input,
+.admin-panel select,
+.admin-panel button{
+    width:100%;
+    border-radius:12px;
+    border:1px solid var(--border);
+    padding:12px 14px;
+    font-size:15px;
+}
+
+.admin-panel input,
+.admin-panel select{
+    background:#0c1320;
+    color:var(--text);
+}
+
+.admin-panel button{
+    background:var(--ice);
+    color:#07111b;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.admin-message{
+    margin-top:10px;
+    color:var(--green);
+    min-height:20px;
+}
+
+/* PANNELLI */
+
+
+.info{
+
+    margin-top:40px;
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+
+    gap:22px;
+
+}
+
+
+
+.panel{
+
+    background:var(--card);
+
+    border:1px solid var(--border);
+
+    border-radius:22px;
+
+    padding:25px;
+
+}
+
+
+
+.panel h2{
+
+    margin-bottom:18px;
+
+}
+
+
+
+.panel p{
+
+    line-height:1.7;
+
+    color:#e7ebf2;
+
+}
+
+
+
+/* TEMPERATURA */
+
+
+.temperature{
+
+    font-size:46px;
+
+    font-weight:700;
+
+    color:var(--ice);
+
+    margin:15px 0;
+
+}
+
+
+
+/* FOOTER */
+
+.donations-footer{
+    margin-top:42px;
+    padding:22px 24px;
+    border:1px solid var(--border);
+    border-radius:20px;
+    background:linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
+}
+
+.donations-footer p{
+    color:var(--muted);
+    line-height:1.6;
+}
+
+.donation-button{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 18px;
+    border-radius:999px;
+    background:linear-gradient(135deg, var(--ice), #74dbff);
+    color:#07111b;
+    font-weight:800;
+    text-decoration:none;
+}
