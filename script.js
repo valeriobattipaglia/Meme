@@ -2,7 +2,6 @@ import { auth } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   renderCard,
-  renderSnackCard,
   getBottleQuantity,
   getBottleSize,
   getProductName,
@@ -15,15 +14,12 @@ import {
   siteShell,
   ageGate,
   drinkGrid,
-  snackGrid,
   beverageCount,
   updateLabel,
   onlineStatus,
   footerOnlineStatus,
   adminForm,
-  snackForm,
   adminMessage,
-  snackMessage,
   adminPanel,
   adminLink,
   editModal,
@@ -42,13 +38,10 @@ import {
 } from "./js/dom.js";
 import {
   loadProducts,
-  loadSnacks,
   saveProduct,
-  saveSnack,
   updateProduct,
   deleteProduct,
   productsCache,
-  snacksCache,
   countBottles
 } from "./js/firestore.js";
 
@@ -58,34 +51,6 @@ onAuthStateChanged(auth, (user) => {
   currentUser = user;
   syncAdminUI();
 });
-
-
-
-function getSnackName(data, docId) {
-  return data.Nome || data.nome || data.name || docId;
-}
-
-function getSnackBagCount(data) {
-  const possibleKeys = ["NumeroBuste", "numeroBuste", "Buste", "buste", "Confezioni", "confezioni"];
-  for (const key of possibleKeys) {
-    const value = Number(data[key]);
-    if (!Number.isNaN(value)) {
-      return Math.max(0, value);
-    }
-  }
-  return 0;
-}
-
-function getSnackQuantityPerBag(data) {
-  const possibleKeys = ["QuantitaBusta", "quantitaBusta", "QuantitaPerBusta", "quantitaPerBusta", "Quantita", "quantita"];
-  for (const key of possibleKeys) {
-    const value = Number(data[key]);
-    if (!Number.isNaN(value)) {
-      return Math.max(0, value);
-    }
-  }
-  return 0;
-}
 
 
 
@@ -101,7 +66,6 @@ function setUpdateTimestamp() {
 
 function renderInventory() {
   if (drinkGrid) drinkGrid.innerHTML = productsCache.map((item) => renderCard(item)).join("");
-  if (snackGrid) snackGrid.innerHTML = snacksCache.map((item) => renderSnackCard(item)).join("");
   if (beverageCount) beverageCount.textContent = String(countBottles());
   setUpdateTimestamp();
   updateOnlineStatus(navigator.onLine);
@@ -110,7 +74,6 @@ function renderInventory() {
 async function refreshInventory() {
   try {
     await loadProducts();
-    await loadSnacks();
     renderInventory();
   } catch (error) {
     console.error(error);
@@ -412,24 +375,6 @@ if (adminForm) {
     } catch (error) {
       console.error(error);
       if (adminMessage) adminMessage.textContent = "Salvataggio non riuscito.";
-    }
-  });
-}
-
-if (snackForm) {
-  snackForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const nome = document.getElementById("snack-nome")?.value.trim() || "";
-    const buste = Math.max(0, Number(document.getElementById("snack-buste")?.value) || 0);
-    const quantitaBusta = Math.max(0, Number(document.getElementById("snack-quantita-busta")?.value) || 0);
-    try {
-      await saveSnack({ Nome: nome, NumeroBuste: buste, QuantitaBusta: quantitaBusta });
-      if (snackMessage) snackMessage.textContent = "Snack salvato su Firebase.";
-      snackForm.reset();
-      await refreshInventory();
-    } catch (error) {
-      console.error(error);
-      if (snackMessage) snackMessage.textContent = "Salvataggio snack non riuscito.";
     }
   });
 }

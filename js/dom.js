@@ -2,7 +2,6 @@ export const siteShell = document.getElementById("site-shell");
 export const ageGate = document.getElementById("age-gate");
 
 export const drinkGrid = document.getElementById("drink-grid");
-export const snackGrid = document.getElementById("snack-grid");
 
 export const beverageCount = document.getElementById("beverage-count");
 
@@ -12,10 +11,8 @@ export const onlineStatus = document.getElementById("online-status");
 export const footerOnlineStatus = document.getElementById("footer-online-status");
 
 export const adminForm = document.getElementById("admin-form");
-export const snackForm = document.getElementById("snack-form");
 
 export const adminMessage = document.getElementById("admin-message");
-export const snackMessage = document.getElementById("snack-message");
 
 export const adminPanel = document.getElementById("admin-panel");
 

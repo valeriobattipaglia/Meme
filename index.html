@@ -58,17 +58,6 @@ Ultimo aggiornamento<br>
 
 </header>
 
-
-<section class="section-block">
-    <h2 class="section-title">🥤 Bevande in stock</h2>
-    <div id="drink-grid" class="grid"></div>
-</section>
-
-<section class="section-block">
-    <h2 class="section-title">🥨 Snack</h2>
-    <div id="snack-grid" class="grid"></div>
-</section>
-
 <div id="admin-panel" class="panel admin-panel hidden">
     <h2>🛠️ Admin • aggiungi bevanda</h2>
     <form id="admin-form">
@@ -125,37 +114,6 @@ Ultimo aggiornamento<br>
         <div id="admin-message" class="admin-message"></div>
     </form>
 
-    <form id="snack-form" class="snack-form">
-        <div class="admin-row">
-            <div>
-                <label for="snack-nome">Nome snack</label>
-                <input id="snack-nome" name="snack-nome" type="text" placeholder="es. Patatine" required>
-            </div>
-            <div>
-                <label for="snack-buste">Numero buste</label>
-                <div class="stepper">
-                    <button type="button" class="stepper-button" data-step="-1" data-target="snack-buste">−</button>
-                    <input id="snack-buste" name="snack-buste" type="number" min="0" step="1" value="3" required>
-                    <button type="button" class="stepper-button" data-step="1" data-target="snack-buste">+</button>
-                </div>
-            </div>
-        </div>
-        <div class="admin-row">
-            <div>
-                <label for="snack-quantita-busta">Quantità per busta</label>
-                <div class="stepper">
-                    <button type="button" class="stepper-button" data-step="-1" data-target="snack-quantita-busta">−</button>
-                    <input id="snack-quantita-busta" name="snack-quantita-busta" type="number" min="0" step="1" value="12" required>
-                    <button type="button" class="stepper-button" data-step="1" data-target="snack-quantita-busta">+</button>
-                </div>
-            </div>
-            <div>
-                <label>&nbsp;</label>
-                <button type="submit">Salva snack su Firebase</button>
-            </div>
-        </div>
-        <div id="snack-message" class="admin-message"></div>
-    </form>
 </div>
 
 <!-- PANNELLI INFORMATIVI -->
