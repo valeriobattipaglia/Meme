@@ -1,95 +1,62 @@
-import { db, auth } from "./firebase.js";
-
+import { auth } from "./firebase.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-    onAuthStateChanged,
-    signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-
-import {
-    renderCard,
-    getBottleQuantity,
-    getBottleSize,
-    getProductName,
-    MAX_LITERS
+  renderCard,
+  renderSnackCard,
+  getBottleQuantity,
+  getBottleSize,
+  getProductName,
+  MAX_LITERS
 } from "./js/render.js";
-
-
-
-
 
 const ADULT_REDIRECT_URL = "https://www.youtube.com/watch?v=cGUTvXkMcT8";
 const ADULT_STORAGE_KEY = "minifrigo_adult_confirmed";
 import {
-    siteShell,
-    ageGate,
-
-    drinkGrid,
-    snackGrid,
-
-    beverageCount,
-
-    updateLabel,
-
-    onlineStatus,
-    footerOnlineStatus,
-
-    adminForm,
-    snackForm,
-
-    adminMessage,
-    snackMessage,
-
-    adminPanel,
-
-    adminLink,
-
-    editModal,
-
-    closeEditModal,
-
-    availabilityForm,
-
-    availabilityMessage,
-
-    adminProductSelect,
-
-    adminProductIdInput,
-
-    deleteProductButton,
-
-    adminQuantityInput,
-
-    adminSingleLitersInput,
-
-    adminTotalLitersInput,
-
-    addPreviewLitersInput,
-
-    addQuantityInput,
-
-    addSingleLitersSelect
-
+  siteShell,
+  ageGate,
+  drinkGrid,
+  snackGrid,
+  beverageCount,
+  updateLabel,
+  onlineStatus,
+  footerOnlineStatus,
+  adminForm,
+  snackForm,
+  adminMessage,
+  snackMessage,
+  adminPanel,
+  adminLink,
+  editModal,
+  closeEditModal,
+  availabilityForm,
+  availabilityMessage,
+  adminProductSelect,
+  adminProductIdInput,
+  deleteProductButton,
+  adminQuantityInput,
+  adminSingleLitersInput,
+  adminTotalLitersInput,
+  addPreviewLitersInput,
+  addQuantityInput,
+  addSingleLitersSelect
 } from "./js/dom.js";
-
-
 import {
-
-    loadProducts,
-    saveProduct,
-    saveSnack,
-    updateProduct,
-    deleteProduct,
-    productsCache,
-    countBottles
-
+  loadProducts,
+  loadSnacks,
+  saveProduct,
+  saveSnack,
+  updateProduct,
+  deleteProduct,
+  productsCache,
+  snacksCache,
+  countBottles
 } from "./js/firestore.js";
 
 let currentUser = null;
 
-onAuthStateChanged(auth,(user)=>{
-    currentUser=user;
-    syncAdminUI();
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  syncAdminUI();
 });
 
 
@@ -123,12 +90,32 @@ function getSnackQuantityPerBag(data) {
 
 
 function setUpdateTimestamp() {
+  if (!updateLabel) return;
   const now = new Date();
   updateLabel.innerHTML = `Ultimo aggiornamento<br>${now.toLocaleDateString("it-IT", {
     day: "2-digit",
     month: "long",
     year: "numeric"
   })}`;
+}
+
+function renderInventory() {
+  if (drinkGrid) drinkGrid.innerHTML = productsCache.map((item) => renderCard(item)).join("");
+  if (snackGrid) snackGrid.innerHTML = snacksCache.map((item) => renderSnackCard(item)).join("");
+  if (beverageCount) beverageCount.textContent = String(countBottles());
+  setUpdateTimestamp();
+  updateOnlineStatus(navigator.onLine);
+}
+
+async function refreshInventory() {
+  try {
+    await loadProducts();
+    await loadSnacks();
+    renderInventory();
+  } catch (error) {
+    console.error(error);
+    if (availabilityMessage) availabilityMessage.textContent = "Impossibile caricare il frigo.";
+  }
 }
 
 function syncAdminUI(){
@@ -255,12 +242,12 @@ async function deleteSelectedProduct() {
 
     await deleteProduct(productId);
 
-    availabilityMessage.textContent =
+    if (availabilityMessage) availabilityMessage.textContent =
     `Bevanda eliminata: ${productName}`;
 
     closeEditModalHandler();
 
-    await loadProducts();
+    await refreshInventory();
 
 
   } catch(error){
@@ -363,7 +350,7 @@ function grantAccess() {
   ageGate.classList.add("hidden");
   siteShell.classList.remove("hidden");
   syncAdminUI();
-  loadProducts();
+  refreshInventory();
 }
 
 function denyAccess() {
@@ -387,7 +374,7 @@ function initAgeGate() {
   if (storedChoice === "yes") {
     ageGate.classList.add("hidden");
     siteShell.classList.remove("hidden");
-    loadProducts();
+    refreshInventory();
     return;
   }
 
@@ -409,11 +396,42 @@ function initAgeGate() {
 }
 
 if (adminForm) {
-  adminForm.addEventListener("submit", saveProduct);
+  adminForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const nome = document.getElementById("nome")?.value.trim() || "";
+    const tipo = document.getElementById("tipo")?.value || "Bevanda";
+    const icona = document.getElementById("icona")?.value || "🥤";
+    const quantita = Math.max(0, Number(document.getElementById("quantita")?.value) || 0);
+    const litriUnita = Math.max(0.33, Number(document.getElementById("litri-unita")?.value) || 0.33);
+    try {
+      await saveProduct({ Nome: nome, Tipo: tipo, Icona: icona, Quantita: quantita, LitriUnita: litriUnita });
+      if (adminMessage) adminMessage.textContent = "Bevanda salvata su Firebase.";
+      adminForm.reset();
+      updateAddPreview();
+      await refreshInventory();
+    } catch (error) {
+      console.error(error);
+      if (adminMessage) adminMessage.textContent = "Salvataggio non riuscito.";
+    }
+  });
 }
 
 if (snackForm) {
-  snackForm.addEventListener("submit", saveSnack);
+  snackForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const nome = document.getElementById("snack-nome")?.value.trim() || "";
+    const buste = Math.max(0, Number(document.getElementById("snack-buste")?.value) || 0);
+    const quantitaBusta = Math.max(0, Number(document.getElementById("snack-quantita-busta")?.value) || 0);
+    try {
+      await saveSnack({ Nome: nome, NumeroBuste: buste, QuantitaBusta: quantitaBusta });
+      if (snackMessage) snackMessage.textContent = "Snack salvato su Firebase.";
+      snackForm.reset();
+      await refreshInventory();
+    } catch (error) {
+      console.error(error);
+      if (snackMessage) snackMessage.textContent = "Salvataggio snack non riuscito.";
+    }
+  });
 }
 
 if (availabilityForm) {

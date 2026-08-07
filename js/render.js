@@ -225,7 +225,8 @@ return `
 
 <article 
 class="card"
-data-doc-id="${productId}">
+data-doc-id="${productId}"
+data-kind="beverage">
 
 <div class="product-image">
 ${icon}
@@ -332,7 +333,8 @@ return `
 
 <article 
 class="card snack-card"
-data-doc-id="${snackId}">
+data-doc-id="${snackId}"
+data-kind="snack">
 
 
 <div class="product-image">
