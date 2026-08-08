@@ -59,66 +59,50 @@ Ultimo aggiornamento<br>
 </header>
 
 <section class="section-block">
-    <h2 class="section-title">🥤 Bevande in stock</h2>
+    <h2 class="section-title">🥤 Bevande in Frigo ❄️</h2>
     <div id="drink-grid" class="grid"></div>
 </section>
 
-<div id="admin-panel" class="panel admin-panel hidden">
-    <h2>🛠️ Admin • aggiungi bevanda</h2>
-    <form id="admin-form">
-        <div class="admin-row">
-            <div>
-                <label for="nome">Nome</label>
-                <input id="nome" name="nome" type="text" placeholder="es. Fanta" required>
-            </div>
-            <div>
-                <label for="tipo">Tipo</label>
-                <select id="tipo" name="tipo" required>
-                    <option value="Drink analcolico">Drink analcolico</option>
-                    <option value="Alcoolico">Alcoolico</option>
-                    <option value="Birra">Birra</option>
-                </select>
-            </div>
-        </div>
-        <div class="admin-row">
-            <div>
-                <label for="icona">Icona / emoji</label>
-                <select id="icona" name="icona">
-                    <option value="🥤">🥤</option>
-                    <option value="🍺">🍺</option>
-                    <option value="🍹">🍹</option>
-                    <option value="🍋">🍋</option>
-                    <option value="🫧">🫧</option>
-                    <option value="🧋">🧋</option>
-                    <option value="☕">☕</option>
-                    <option value="🥛">🥛</option>
-                </select>
-            </div>
-            <div>
-                <label for="quantita">Quantità bottiglie</label>
-                <input id="quantita" name="quantita" type="number" min="0" max="20" step="1" value="6" required>
-            </div>
-        </div>
-        <div class="admin-row">
-            <div>
-                <label for="litri-unita">Litri singola bottiglia</label>
-                <select id="litri-unita" name="litri-unita">
-                    <option value="0.33">0.33 L</option>
-                    <option value="0.5">0.5 L</option>
-                    <option value="1">1 L</option>
-                    <option value="1.5" selected>1.5 L</option>
-                    <option value="2">2 L</option>
-                </select>
-            </div>
-            <div>
-                <label>Totale stimato</label>
-                <input type="text" id="add-preview-litri" value="9.0 L" disabled>
-            </div>
-        </div>
-        <button type="submit">Salva su Firebase</button>
-        <div id="admin-message" class="admin-message"></div>
-    </form>
+<section class="section-block">
+    <h2 class="section-title">🧋 Bevande al Caldo ☀️</h2>
+    <div id="stock-grid" class="grid"></div>
+</section>
 
+<section class="section-block">
+    <h2 class="section-title">🍟 Snack 🍟</h2>
+    <div id="snack-grid" class="grid"></div>
+</section>
+
+<div id="admin-panel" class="panel admin-panel hidden">
+    <h2>🛠️ Admin • Hai fatto la spesa eh?</h2>
+<form id="admin-form">
+  <!-- 1. Selezione Categoria -->
+  <label for="categoria">Categoria Destinazione:</label>
+  <select id="categoria">
+    <option value="bevanda">Bevanda (Frigo)</option>
+    <option value="stock">Stock (Scorta)</option>
+    <option value="snack">Snack</option>
+  </select>
+
+  <!-- Campi Generici -->
+  <input type="text" id="nome" placeholder="Nome prodotto" required>
+  <input type="text" id="icona" placeholder="Icona Emoji (es. 🍿 o 🥤)">
+  <input type="number" id="quantita" placeholder="Quantità / Pezzi" min="0" value="1">
+
+  <!-- Campo specifico Bevande/Stock -->
+  <div id="group-litri">
+    <label for="litri-unita">Litri per unità:</label>
+    <input type="number" id="litri-unita" step="0.01" value="0.33">
+  </div>
+
+  <!-- Campo specifico Snack -->
+  <div id="group-grammi" class="hidden">
+    <label for="grammiquantita">Grammi per pezzo:</label>
+    <input type="number" id="grammiquantita" placeholder="es. 50" min="0">
+  </div>
+
+  <button type="submit">Aggiungi Prodotto</button>
+</form>
 </div>
 
 <!-- PANNELLI INFORMATIVI -->

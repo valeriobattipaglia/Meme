@@ -3,6 +3,10 @@ export const ageGate = document.getElementById("age-gate");
 
 export const drinkGrid = document.getElementById("drink-grid");
 
+export const stockGrid = document.getElementById("stock-grid");
+
+export const snackGrid = document.getElementById("snack-grid");
+
 export const beverageCount = document.getElementById("beverage-count");
 
 export const updateLabel = document.getElementById("last-update");
