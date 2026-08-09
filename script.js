@@ -18,7 +18,8 @@ import {
   editModal, closeEditModal, availabilityForm, availabilityMessage,
   adminProductIdInput, adminProductKindInput, adminProductSelect, adminProductType,
   adminProductIcon, adminEditKind, deleteProductButton, adminQuantityInput,
-  adminUnitInfo, adminTotalInfo
+  adminUnitInfo, adminTotalInfo, openAddModalButton, addModal, closeAddModal,
+  inventoryTabs, inventoryViews
 } from "./js/dom.js";
 import {
   loadProducts, loadStock, loadSnack,
@@ -37,8 +38,8 @@ const ICONS = {
   snack: ["🍟", "🍿", "🥨", "🍪", "🍫", "🍬", "🥜", "🥟"]
 };
 
-const DRINK_SIZES = [0.25, 0.33, 0.50, 0.75, 1, 1.5, 2];
-const SNACK_SIZES = [75, 100, 125, 150, 200, 250,500];
+const DRINK_SIZES = [0.20, 0.25, 0.33, 0.50, 0.75, 1, 1.5, 2];
+const SNACK_SIZES = [20, 30, 40, 50, 75, 100, 125, 150, 200, 250, 500];
 
 let currentUser = null;
 
@@ -93,19 +94,15 @@ function populateSizeOptions() {
 function renderIconSuggestions() {
   if (!iconSuggestions) return;
   const category = categoriaSelect?.value || "bevanda";
-  iconSuggestions.innerHTML = ICONS[category].map((icon, index) =>
-    `<button type="button" class="icon-suggestion${index === 0 ? " selected" : ""}" data-icon="${icon}">${icon}</button>`
+  iconSuggestions.innerHTML = ICONS[category].map(icon =>
+    `<option value="${icon}">${icon}</option>`
   ).join("");
 
-  iconSuggestions.querySelectorAll(".icon-suggestion").forEach(button => {
-    button.addEventListener("click", () => {
-      iconSuggestions.querySelectorAll(".icon-suggestion").forEach(item => item.classList.remove("selected"));
-      button.classList.add("selected");
-      if (iconInput) iconInput.value = button.dataset.icon || "";
-    });
-  });
+  iconSuggestions.onchange = () => {
+    if (iconInput) iconInput.value = iconSuggestions.value;
+  };
 
-  if (iconInput && !iconInput.value) iconInput.value = ICONS[category][0];
+  if (iconInput && !iconInput.value) iconInput.value = iconSuggestions.value;
 }
 
 function updateAddFormVisibility() {
@@ -165,6 +162,7 @@ async function addArticle(event) {
     populateSizeOptions();
     updateAddFormVisibility();
     await refreshInventory();
+    closeAddModalHandler();
   } catch (error) {
     console.error(error);
     adminMessage.textContent = "Salvataggio non riuscito.";
@@ -173,11 +171,46 @@ async function addArticle(event) {
 
 function syncAdminUI() {
   const isAdmin = currentUser !== null;
-  adminPanel?.classList.toggle("hidden", !isAdmin);
+  openAddModalButton?.classList.toggle("hidden", !isAdmin);
+  if (!isAdmin) closeAddModalHandler();
+
   if (adminLink) {
     adminLink.textContent = isAdmin ? "🔓" : "🔐";
     adminLink.title = isAdmin ? "Logout admin" : "Area admin";
   }
+}
+
+function openAddModalHandler() {
+  if (!currentUser || !addModal) return;
+
+  adminMessage.textContent = "";
+  adminForm?.reset();
+  if (categoriaSelect) categoriaSelect.value = "bevanda";
+  if (addQuantityInput) addQuantityInput.value = "1";
+  populateSizeOptions();
+  updateAddFormVisibility();
+  addModal.classList.remove("hidden");
+}
+
+function closeAddModalHandler() {
+  addModal?.classList.add("hidden");
+}
+
+function setupInventoryTabs() {
+  inventoryTabs?.forEach(tab => {
+    tab.addEventListener("click", () => {
+      const target = tab.dataset.tab;
+      inventoryTabs.forEach(item => {
+        const active = item === tab;
+        item.classList.toggle("active", active);
+        item.setAttribute("aria-selected", active ? "true" : "false");
+      });
+
+      inventoryViews?.forEach(view => {
+        view.classList.toggle("active", view.dataset.view === target);
+      });
+    });
+  });
 }
 
 async function handleAdminLinkClick(event) {
@@ -384,6 +417,11 @@ adminForm?.addEventListener("submit", addArticle);
 availabilityForm?.addEventListener("submit", updateProductAvailability);
 deleteProductButton?.addEventListener("click", deleteSelectedProduct);
 adminLink?.addEventListener("click", handleAdminLinkClick);
+openAddModalButton?.addEventListener("click", openAddModalHandler);
+closeAddModal?.addEventListener("click", closeAddModalHandler);
+addModal?.addEventListener("click", event => {
+  if (event.target === addModal) closeAddModalHandler();
+});
 closeEditModal?.addEventListener("click", closeEditModalHandler);
 editModal?.addEventListener("click", event => {
   if (event.target === editModal) closeEditModalHandler();
@@ -392,6 +430,7 @@ window.addEventListener("online", () => updateOnlineStatus(true));
 window.addEventListener("offline", () => updateOnlineStatus(false));
 
 setupQuantityButtons();
+setupInventoryTabs();
 populateSizeOptions();
 updateAddFormVisibility();
 setupGridClickListener(drinkGrid);

@@ -10,6 +10,11 @@ export const footerOnlineStatus = document.getElementById("footer-online-status"
 export const adminForm = document.getElementById("admin-form");
 export const adminMessage = document.getElementById("admin-message");
 export const adminPanel = document.getElementById("admin-panel");
+export const openAddModalButton = document.getElementById("open-add-modal");
+export const addModal = document.getElementById("add-modal");
+export const closeAddModal = document.getElementById("close-add-modal");
+export const inventoryTabs = document.querySelectorAll(".inventory-tab");
+export const inventoryViews = document.querySelectorAll(".inventory-view");
 export const adminLink = document.querySelector(".admin-link");
 
 export const categoriaSelect = document.getElementById("categoria");

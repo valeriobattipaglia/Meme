@@ -186,6 +186,88 @@ header{
 
 
 
+/* NAVIGAZIONE INVENTARIO */
+
+.inventory-tabs{
+    position:sticky;
+    top:12px;
+    z-index:20;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;
+    padding:6px;
+    margin:0 0 24px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:rgba(8,11,18,.82);
+    backdrop-filter:blur(14px);
+    box-shadow:0 12px 30px rgba(0,0,0,.2);
+}
+
+.inventory-tab{
+    border:0;
+    border-radius:13px;
+    padding:12px 10px;
+    background:transparent;
+    color:var(--muted);
+    font-size:15px;
+    font-weight:800;
+    cursor:pointer;
+    transition:.2s ease;
+}
+
+.inventory-tab:hover{
+    color:var(--text);
+    background:rgba(255,255,255,.05);
+}
+
+.inventory-tab.active{
+    color:var(--text);
+    background:linear-gradient(135deg,rgba(85,199,255,.18),rgba(67,226,138,.10));
+    box-shadow:inset 0 0 0 1px rgba(85,199,255,.22);
+}
+
+.inventory-view{
+    display:none;
+}
+
+.inventory-view.active{
+    display:block;
+}
+
+.floating-add-button{
+    position:fixed;
+    right:26px;
+    bottom:26px;
+    z-index:90;
+    width:62px;
+    height:62px;
+    border:1px solid rgba(85,199,255,.55);
+    border-radius:50%;
+    background:linear-gradient(145deg,var(--ice),#74dbff);
+    color:#06111a;
+    font-size:38px;
+    font-weight:400;
+    line-height:1;
+    cursor:pointer;
+    box-shadow:0 14px 34px rgba(0,0,0,.38),0 0 24px rgba(85,199,255,.18);
+    transition:.2s ease;
+}
+
+.floating-add-button:hover{
+    transform:translateY(-3px) scale(1.04);
+    box-shadow:0 18px 38px rgba(0,0,0,.44),0 0 30px rgba(85,199,255,.25);
+}
+
+.floating-add-button:active{
+    transform:scale(.96);
+}
+
+.add-modal-card{
+    max-height:calc(100vh - 40px);
+    overflow-y:auto;
+}
+
 /* TITOLI */
 
 .section-title{
@@ -400,27 +482,7 @@ header{
 }
 
 .icon-suggestions{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-}
-
-.admin-panel .icon-suggestion{
-    width:46px !important;
-    height:46px;
-    padding:0 !important;
-    border-radius:13px !important;
-    font-size:24px !important;
-    background:rgba(255,255,255,.06) !important;
-    color:var(--text) !important;
-    border:1px solid rgba(255,255,255,.1) !important;
-}
-
-.icon-suggestion:hover,
-.icon-suggestion.selected{
-    border-color:var(--ice) !important;
-    background:rgba(85,199,255,.14) !important;
-    transform:translateY(-1px);
+    width:100%;
 }
 
 .quantity-control{
@@ -594,6 +656,21 @@ header{
 @media(max-width:600px){
     .edit-actions{grid-template-columns:1fr;}
     .edit-card{padding:18px;}
+    .inventory-tabs{
+        top:8px;
+        margin-bottom:18px;
+    }
+    .inventory-tab{
+        font-size:13px;
+        padding:11px 6px;
+    }
+    .floating-add-button{
+        width:56px;
+        height:56px;
+        right:18px;
+        bottom:18px;
+        font-size:34px;
+    }
 }
 
 /* PANNELLI */

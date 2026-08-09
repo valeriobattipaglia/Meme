@@ -58,70 +58,86 @@ Ultimo aggiornamento<br>
 
 </header>
 
-<section class="section-block">
+<div class="inventory-tabs" role="tablist" aria-label="Categorie inventario">
+    <button type="button" class="inventory-tab active" data-tab="drink" role="tab" aria-selected="true">🥤 Frigo</button>
+    <button type="button" class="inventory-tab" data-tab="stock" role="tab" aria-selected="false">📦 Stock</button>
+    <button type="button" class="inventory-tab" data-tab="snack" role="tab" aria-selected="false">🍟 Snack</button>
+</div>
+
+<section class="inventory-view active" data-view="drink">
     <h2 class="section-title">🥤 Bevande in Frigo ❄️</h2>
     <div id="drink-grid" class="grid"></div>
 </section>
 
-<section class="section-block">
-    <h2 class="section-title">🧋 Bevande al Caldo ☀️</h2>
+<section class="inventory-view" data-view="stock">
+    <h2 class="section-title">📦 Bevande al Caldo ☀️</h2>
     <div id="stock-grid" class="grid"></div>
 </section>
 
-<section class="section-block">
-    <h2 class="section-title">🍟 Snack 🍟</h2>
+<section class="inventory-view" data-view="snack">
+    <h2 class="section-title">🍟 Snack</h2>
     <div id="snack-grid" class="grid"></div>
 </section>
 
-<div id="admin-panel" class="panel admin-panel hidden">
-    <h2>🛠️ Admin • Hai fatto la spesa eh?</h2>
-<form id="admin-form">
-  <div class="admin-row">
-    <div>
-      <label for="categoria">Categoria</label>
-      <select id="categoria">
-        <option value="bevanda">🥤 Bevanda (Frigo)</option>
-        <option value="stock">📦 Stock (Scorta)</option>
-        <option value="snack">🍟 Snack</option>
-      </select>
-    </div>
-    <div>
-      <label for="nome">Nome articolo</label>
-      <input type="text" id="nome" placeholder="es. Coca-Cola" required>
-    </div>
-  </div>
+<button type="button" id="open-add-modal" class="floating-add-button hidden" aria-label="Aggiungi articolo" title="Aggiungi articolo">+</button>
 
-  <div class="admin-field">
-    <label>Icona suggerita</label>
-    <div id="icon-suggestions" class="icon-suggestions"></div>
-    <input type="text" id="icona" placeholder="oppure inserisci una emoji personalizzata" maxlength="4">
-  </div>
+<div id="add-modal" class="edit-modal hidden">
+    <div class="edit-card add-modal-card">
+        <div class="edit-header">
+            <div>
+                <span class="edit-kind">NUOVO ARTICOLO</span>
+                <h2>➕ Aggiungi articolo</h2>
+            </div>
+            <button type="button" id="close-add-modal" class="close-button" aria-label="Chiudi">✕</button>
+        </div>
 
-  <div class="admin-row">
-    <div>
-      <label for="quantita">Quantità</label>
-      <div class="quantity-control add-quantity-control">
-        <button type="button" class="quantity-button" data-step="-1" data-target="quantita">−</button>
-        <input type="number" id="quantita" min="0" max="99" step="1" value="1" required>
-        <button type="button" class="quantity-button" data-step="1" data-target="quantita">+</button>
-      </div>
+        <form id="admin-form">
+            <div class="admin-row">
+                <div>
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria">
+                        <option value="bevanda">🥤 Bevanda (Frigo)</option>
+                        <option value="stock">📦 Stock (Scorta)</option>
+                        <option value="snack">🍟 Snack</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="nome">Nome articolo</label>
+                    <input type="text" id="nome" placeholder="es. Coca-Cola" required>
+                </div>
+            </div>
+
+            <div class="admin-field">
+                <label for="icon-suggestions">Icona suggerita</label>
+                <select id="icon-suggestions" class="icon-suggestions" aria-label="Seleziona un'icona suggerita"></select>
+            </div>
+
+            <div class="admin-row">
+                <div>
+                    <label for="quantita">Quantità</label>
+                    <div class="quantity-control add-quantity-control">
+                        <button type="button" class="quantity-button" data-step="-1" data-target="quantita">−</button>
+                        <input type="number" id="quantita" min="0" max="99" step="1" value="1" required>
+                        <button type="button" class="quantity-button" data-step="1" data-target="quantita">+</button>
+                    </div>
+                </div>
+
+                <div id="group-litri">
+                    <label for="litri-unita">Formato</label>
+                    <select id="litri-unita"></select>
+                </div>
+
+                <div id="group-grammi" class="hidden">
+                    <label for="grammiquantita">Formato snack</label>
+                    <select id="grammiquantita"></select>
+                </div>
+            </div>
+
+            <div id="add-format-preview" class="format-preview"></div>
+            <button type="submit">➕ Aggiungi articolo</button>
+            <div id="admin-message" class="admin-message"></div>
+        </form>
     </div>
-
-    <div id="group-litri">
-      <label for="litri-unita">Formato</label>
-      <select id="litri-unita"></select>
-    </div>
-
-    <div id="group-grammi" class="hidden">
-      <label for="grammiquantita">Formato snack</label>
-      <select id="grammiquantita"></select>
-    </div>
-  </div>
-
-  <div id="add-format-preview" class="format-preview"></div>
-  <button type="submit">➕ Aggiungi articolo</button>
-  <div id="admin-message" class="admin-message"></div>
-</form>
 </div>
 
 <!-- PANNELLI INFORMATIVI -->
