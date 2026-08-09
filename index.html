@@ -76,32 +76,51 @@ Ultimo aggiornamento<br>
 <div id="admin-panel" class="panel admin-panel hidden">
     <h2>🛠️ Admin • Hai fatto la spesa eh?</h2>
 <form id="admin-form">
-  <!-- 1. Selezione Categoria -->
-  <label for="categoria">Categoria Destinazione:</label>
-  <select id="categoria">
-    <option value="bevanda">Bevanda (Frigo)</option>
-    <option value="stock">Stock (Scorta)</option>
-    <option value="snack">Snack</option>
-  </select>
-
-  <!-- Campi Generici -->
-  <input type="text" id="nome" placeholder="Nome prodotto" required>
-  <input type="text" id="icona" placeholder="Icona Emoji (es. 🍿 o 🥤)">
-  <input type="number" id="quantita" placeholder="Quantità / Pezzi" min="0" value="1">
-
-  <!-- Campo specifico Bevande/Stock -->
-  <div id="group-litri">
-    <label for="litri-unita">Litri per unità:</label>
-    <input type="number" id="litri-unita" step="0.01" value="0.33">
+  <div class="admin-row">
+    <div>
+      <label for="categoria">Categoria</label>
+      <select id="categoria">
+        <option value="bevanda">🥤 Bevanda (Frigo)</option>
+        <option value="stock">📦 Stock (Scorta)</option>
+        <option value="snack">🍟 Snack</option>
+      </select>
+    </div>
+    <div>
+      <label for="nome">Nome articolo</label>
+      <input type="text" id="nome" placeholder="es. Coca-Cola" required>
+    </div>
   </div>
 
-  <!-- Campo specifico Snack -->
-  <div id="group-grammi" class="hidden">
-    <label for="grammiquantita">Grammi per pezzo:</label>
-    <input type="number" id="grammiquantita" placeholder="es. 50" min="0">
+  <div class="admin-field">
+    <label>Icona suggerita</label>
+    <div id="icon-suggestions" class="icon-suggestions"></div>
+    <input type="text" id="icona" placeholder="oppure inserisci una emoji personalizzata" maxlength="4">
   </div>
 
-  <button type="submit">Aggiungi Prodotto</button>
+  <div class="admin-row">
+    <div>
+      <label for="quantita">Quantità</label>
+      <div class="quantity-control add-quantity-control">
+        <button type="button" class="quantity-button" data-step="-1" data-target="quantita">−</button>
+        <input type="number" id="quantita" min="0" max="99" step="1" value="1" required>
+        <button type="button" class="quantity-button" data-step="1" data-target="quantita">+</button>
+      </div>
+    </div>
+
+    <div id="group-litri">
+      <label for="litri-unita">Formato</label>
+      <select id="litri-unita"></select>
+    </div>
+
+    <div id="group-grammi" class="hidden">
+      <label for="grammiquantita">Formato snack</label>
+      <select id="grammiquantita"></select>
+    </div>
+  </div>
+
+  <div id="add-format-preview" class="format-preview"></div>
+  <button type="submit">➕ Aggiungi articolo</button>
+  <div id="admin-message" class="admin-message"></div>
 </form>
 </div>
 
@@ -186,37 +205,46 @@ Ultimo aggiornamento<br>
 <div id="edit-modal" class="edit-modal hidden">
     <div class="edit-card">
         <div class="edit-header">
-            <h2>✏️ Modifica disponibilità</h2>
+            <div>
+                <span id="admin-edit-kind" class="edit-kind">ARTICOLO</span>
+                <h2>✏️ Aggiorna disponibilità</h2>
+            </div>
             <button type="button" id="close-edit-modal" class="close-button" aria-label="Chiudi">✕</button>
         </div>
+
         <form id="availability-form">
+            <input id="admin-product-id" name="admin-product-id" type="hidden" value="">
+            <input id="admin-product-kind" name="admin-product-kind" type="hidden" value="drink">
+
+            <div class="edit-product-summary">
+                <div id="admin-product-icon" class="edit-product-icon">🥤</div>
+                <div>
+                    <div id="admin-product" class="edit-product-name">Articolo</div>
+                    <div id="admin-product-type" class="edit-product-type">Bevanda</div>
+                </div>
+            </div>
+
             <div class="admin-row">
                 <div>
-                    <label for="admin-product">Bevanda</label>
-                    <input id="admin-product" name="admin-product" type="text" value="" readonly>
-                    <input id="admin-product-id" name="admin-product-id" type="hidden" value="">
-                </div>
-                <div>
-                    <label for="admin-quantita">Numero bottiglie</label>
-                    <div class="stepper">
-                        <button type="button" class="stepper-button" data-step="-1" data-target="admin-quantita">−</button>
-                        <input id="admin-quantita" name="admin-quantita" type="number" min="0" max="20" step="1" value="1" required>
-                        <button type="button" class="stepper-button" data-step="1" data-target="admin-quantita">+</button>
+                    <label for="admin-quantita">Quantità</label>
+                    <div class="quantity-control">
+                        <button type="button" class="quantity-button" data-step="-1" data-target="admin-quantita">−</button>
+                        <input id="admin-quantita" name="admin-quantita" type="number" min="0" max="99" step="1" value="1" required>
+                        <button type="button" class="quantity-button" data-step="1" data-target="admin-quantita">+</button>
                     </div>
                 </div>
-            </div>
-            <div class="admin-row">
                 <div>
-                    <label for="admin-litri-unita">Litri singola bottiglia</label>
-                    <input id="admin-litri-unita" name="admin-litri-unita" type="text" value="0.33 L" disabled>
-                </div>
-                <div>
-                    <label for="admin-litri-totali">Litri totali stimati</label>
-                    <input id="admin-litri-totali" name="admin-litri-totali" type="text" value="0.33 L" disabled>
+                    <label>Formato unità</label>
+                    <div id="admin-unit-info" class="readonly-info">0,33 L</div>
                 </div>
             </div>
-            <button type="submit">Aggiorna disponibilità</button>
-            <button type="button" id="delete-product-button" class="delete-button">Elimina bevanda</button>
+
+            <div id="admin-total-info" class="edit-total-info">Totale: 0,33 L</div>
+
+            <div class="edit-actions">
+                <button type="button" id="delete-product-button" class="delete-button">🗑️ Elimina articolo</button>
+                <button type="submit">💾 Salva quantità</button>
+            </div>
             <div id="availability-message" class="admin-message"></div>
         </form>
     </div>

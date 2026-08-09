@@ -342,84 +342,32 @@ header{
 
 /* ADMIN */
 
-.edit-modal{
-    position:fixed;
-    inset:0;
-    background:rgba(3, 6, 12, 0.86);
-    display:grid;
-    place-items:center;
-    padding:20px;
-    z-index:100;
-}
-
-.edit-card{
-    width:min(560px, 100%);
-    background:linear-gradient(145deg, rgba(85, 199, 255, 0.12), rgba(255,255,255,.05));
-    border:1px solid rgba(85, 199, 255, 0.34);
-    border-radius:26px;
-    padding:24px;
-    box-shadow:0 24px 80px rgba(0,0,0,.45);
-}
-
-.edit-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:18px;
-}
-
-.edit-header h2{
-    font-size:24px;
-}
-
-.close-button{
-    border:none;
-    background:rgba(255,255,255,.08);
-    color:var(--text);
-    font-size:22px;
-    width:40px;
-    height:40px;
-    border-radius:14px;
-    cursor:pointer;
-    line-height:1;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.stepper{
-    display:flex;
-    align-items:center;
-    gap:8px;
-}
-
-.stepper-button{
-    width:36px;
-    height:36px;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,.12);
-    background:rgba(255,255,255,.06);
-    color:var(--text);
-    font-size:20px;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.stepper input{
-    flex:1;
-    min-width:0;
-}
-
 .admin-panel{
     margin-top:24px;
 }
 
-.edit-card .admin-row{
-    margin-bottom:14px;
+.admin-panel form{
+    display:grid;
+    gap:16px;
 }
 
+.admin-panel .admin-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px;
+}
+
+.admin-panel label,
+.edit-card label{
+    display:block;
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:7px;
+}
+
+.admin-panel input,
+.admin-panel select,
+.admin-panel button,
 .edit-card input,
 .edit-card select,
 .edit-card button{
@@ -430,71 +378,222 @@ header{
     font-size:15px;
 }
 
+.admin-panel input,
+.admin-panel select,
 .edit-card input,
 .edit-card select{
-    background:#0d1420;
+    background:#0c1320;
     color:var(--text);
 }
 
+.admin-panel button,
 .edit-card button{
     background:linear-gradient(135deg, var(--ice), #74dbff);
     color:#07111b;
     font-weight:800;
     cursor:pointer;
-    margin-top:8px;
 }
 
-.delete-button{
-    background:linear-gradient(135deg, #ff6b7b, #ff425a) !important;
-    color:#fff !important;
-    border-color:rgba(255, 107, 123, 0.6) !important;
-}
-
-.admin-panel form{
+.admin-field{
     display:grid;
-    gap:14px;
+    gap:8px;
 }
 
-.admin-panel .admin-row{
+.icon-suggestions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.admin-panel .icon-suggestion{
+    width:46px !important;
+    height:46px;
+    padding:0 !important;
+    border-radius:13px !important;
+    font-size:24px !important;
+    background:rgba(255,255,255,.06) !important;
+    color:var(--text) !important;
+    border:1px solid rgba(255,255,255,.1) !important;
+}
+
+.icon-suggestion:hover,
+.icon-suggestion.selected{
+    border-color:var(--ice) !important;
+    background:rgba(85,199,255,.14) !important;
+    transform:translateY(-1px);
+}
+
+.quantity-control{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-    gap:12px;
+    grid-template-columns:46px minmax(70px,1fr) 46px;
+    gap:8px;
+    align-items:center;
 }
 
-.admin-panel label{
-    display:block;
-    font-size:13px;
-    color:var(--muted);
-    margin-bottom:6px;
+.admin-panel .quantity-button,
+.edit-card .quantity-button{
+    width:46px !important;
+    height:46px;
+    padding:0 !important;
+    border-radius:14px !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    background:rgba(255,255,255,.06) !important;
+    color:var(--text) !important;
+    font-size:24px !important;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 
-.admin-panel input,
-.admin-panel select,
-.admin-panel button{
-    width:100%;
-    border-radius:12px;
-    border:1px solid var(--border);
+.quantity-button:hover{
+    border-color:var(--ice) !important;
+    background:rgba(85,199,255,.12) !important;
+}
+
+.quantity-control input{
+    text-align:center;
+    font-size:18px;
+    font-weight:800;
+}
+
+.format-preview{
+    border:1px solid rgba(85,199,255,.2);
+    background:rgba(85,199,255,.06);
+    color:var(--ice);
+    border-radius:14px;
     padding:12px 14px;
-    font-size:15px;
-}
-
-.admin-panel input,
-.admin-panel select{
-    background:#0c1320;
-    color:var(--text);
-}
-
-.admin-panel button{
-    background:var(--ice);
-    color:#07111b;
-    font-weight:700;
-    cursor:pointer;
+    font-size:14px;
 }
 
 .admin-message{
-    margin-top:10px;
+    margin-top:0;
     color:var(--green);
     min-height:20px;
+}
+
+.edit-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(3,6,12,.86);
+    display:grid;
+    place-items:center;
+    padding:20px;
+    z-index:100;
+    backdrop-filter:blur(8px);
+}
+
+.edit-card{
+    width:min(520px,100%);
+    background:linear-gradient(145deg,rgba(85,199,255,.13),rgba(255,255,255,.05));
+    border:1px solid rgba(85,199,255,.34);
+    border-radius:26px;
+    padding:24px;
+    box-shadow:0 24px 80px rgba(0,0,0,.5);
+}
+
+.edit-card form{
+    display:grid;
+    gap:16px;
+}
+
+.edit-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:20px;
+}
+
+.edit-header h2{
+    font-size:23px;
+    margin-top:3px;
+}
+
+.edit-kind{
+    color:var(--ice);
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:1.5px;
+}
+
+.close-button{
+    border:none !important;
+    background:rgba(255,255,255,.08) !important;
+    color:var(--text) !important;
+    font-size:20px !important;
+    width:40px !important;
+    height:40px;
+    padding:0 !important;
+    border-radius:13px !important;
+    cursor:pointer;
+}
+
+.edit-product-summary{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    padding:15px;
+    border-radius:18px;
+    background:rgba(0,0,0,.18);
+    border:1px solid rgba(255,255,255,.08);
+}
+
+.edit-product-icon{
+    width:62px;
+    height:62px;
+    display:grid;
+    place-items:center;
+    border-radius:17px;
+    background:rgba(255,255,255,.06);
+    font-size:38px;
+}
+
+.edit-product-name{
+    font-size:20px;
+    font-weight:800;
+}
+
+.edit-product-type{
+    color:var(--muted);
+    margin-top:4px;
+    font-size:14px;
+}
+
+.readonly-info{
+    min-height:46px;
+    display:flex;
+    align-items:center;
+    padding:12px 14px;
+    border-radius:14px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    color:var(--muted);
+    font-weight:700;
+}
+
+.edit-total-info{
+    padding:13px 15px;
+    border-radius:14px;
+    background:rgba(67,226,138,.08);
+    border:1px solid rgba(67,226,138,.18);
+    color:var(--green);
+    font-weight:800;
+}
+
+.edit-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.delete-button{
+    background:linear-gradient(135deg,#ff6b7b,#ff425a) !important;
+    color:#fff !important;
+    border-color:rgba(255,107,123,.6) !important;
+}
+
+@media(max-width:600px){
+    .edit-actions{grid-template-columns:1fr;}
+    .edit-card{padding:18px;}
 }
 
 /* PANNELLI */
