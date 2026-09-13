@@ -433,6 +433,7 @@ function renderOpenFoodFactsProduct(barcode, product) {
   const category = product?.categories || prettyList(product?.categories_tags);
   const allergens = product?.allergens || prettyList(product?.allergens_tags);
   const nutriments = product?.nutriments || {};
+  const image = offImageUrl(product);
 
   const greenScore = product?.environmental_score_grade
     ? String(product.environmental_score_grade).toUpperCase()
