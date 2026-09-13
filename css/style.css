@@ -770,3 +770,98 @@ header{
     font-weight:800;
     text-decoration:none;
 }
+
+/* SCANNER CODICI A BARRE */
+
+.barcode-modal-card{
+    width:min(620px,100%);
+    max-height:calc(100vh - 40px);
+    overflow-y:auto;
+}
+
+.barcode-reader{
+    width:100%;
+    min-height:260px;
+    overflow:hidden;
+    border-radius:18px;
+    background:#05080d;
+    border:1px solid rgba(255,255,255,.10);
+}
+
+.barcode-reader video{
+    border-radius:18px;
+}
+
+.barcode-status{
+    margin-top:12px;
+    padding:12px 14px;
+    border-radius:14px;
+    background:rgba(85,199,255,.06);
+    border:1px solid rgba(85,199,255,.15);
+    color:var(--ice);
+    font-size:14px;
+    line-height:1.5;
+}
+
+.barcode-result{
+    margin-top:14px;
+    padding:15px;
+    border-radius:18px;
+    background:rgba(0,0,0,.18);
+    border:1px solid rgba(255,255,255,.08);
+}
+
+.barcode-result-code{
+    color:var(--ice);
+    font-size:15px;
+    font-weight:800;
+    margin-bottom:12px;
+}
+
+.barcode-result-fields{
+    display:grid;
+    gap:8px;
+}
+
+.barcode-field{
+    display:grid;
+    grid-template-columns:minmax(110px,.7fr) minmax(0,1.3fr);
+    gap:12px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:rgba(255,255,255,.04);
+}
+
+.barcode-field span{
+    color:var(--muted);
+    font-size:13px;
+}
+
+.barcode-field strong{
+    color:var(--text);
+    font-size:14px;
+    font-weight:600;
+    overflow-wrap:anywhere;
+    white-space:pre-wrap;
+}
+
+.barcode-empty{
+    color:var(--muted);
+    line-height:1.6;
+    font-size:14px;
+}
+
+#barcode-retry-button{
+    margin-top:12px;
+}
+
+@media(max-width:600px){
+    .barcode-reader{
+        min-height:220px;
+    }
+
+    .barcode-field{
+        grid-template-columns:1fr;
+        gap:4px;
+    }
+}

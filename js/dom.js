@@ -41,3 +41,12 @@ export const deleteProductButton = document.getElementById("delete-product-butto
 export const adminQuantityInput = document.getElementById("admin-quantita");
 export const adminUnitInfo = document.getElementById("admin-unit-info");
 export const adminTotalInfo = document.getElementById("admin-total-info");
+
+export const barcodeModal = document.getElementById("barcode-modal");
+export const closeBarcodeModal = document.getElementById("close-barcode-modal");
+export const barcodeReader = document.getElementById("barcode-reader");
+export const barcodeStatus = document.getElementById("barcode-status");
+export const barcodeResult = document.getElementById("barcode-result");
+export const barcodeResultCode = document.getElementById("barcode-result-code");
+export const barcodeResultFields = document.getElementById("barcode-result-fields");
+export const barcodeRetryButton = document.getElementById("barcode-retry-button");

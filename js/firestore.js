@@ -1,4 +1,4 @@
-import {collection,getDocs,addDoc,doc,updateDoc,deleteDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {collection,getDocs,addDoc,doc,updateDoc,deleteDoc,getDoc,query,where,limit} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { db } from "../firebase.js";
 import {getBottleQuantity} from "./render.js";
 
@@ -81,6 +81,39 @@ export async function updateSnack(id, data) {
 export async function deleteSnack(id) {
     const ref = doc(db, "Snack", id);
     return await deleteDoc(ref);
+}
+
+// ==========================
+// CODICI A BARRE
+// ==========================
+
+// Per ora il database atteso è:
+// Barcodes/{EAN}
+// oppure un documento della collection Barcodes con campo Codice = EAN.
+export async function findBarcode(barcode) {
+    const cleanBarcode = String(barcode || "").replace(/\D/g, "");
+    if (!cleanBarcode) return null;
+
+    // Prima prova: ID del documento = codice a barre.
+    const directRef = doc(db, "Barcodes", cleanBarcode);
+    const directSnap = await getDoc(directRef);
+    if (directSnap.exists()) {
+        return { id: directSnap.id, data: directSnap.data() };
+    }
+
+    // Seconda prova: campo Codice = codice a barre.
+    const q = query(
+        collection(db, "Barcodes"),
+        where("Codice", "==", cleanBarcode),
+        limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+        const item = snapshot.docs[0];
+        return { id: item.id, data: item.data() };
+    }
+
+    return null;
 }
 // ==========================
 // CONTATORI

@@ -134,8 +134,30 @@ Ultimo aggiornamento<br>
             </div>
 
             <div id="add-format-preview" class="format-preview"></div>
-            <button type="button" id="open-photo-button">📷 Foto</button>
+            <button type="button" id="open-photo-button">📷 Scansiona codice a barre</button>
             <input id="photo-input" type="file" accept="image/*" capture="environment" class="hidden" aria-label="Scatta una foto">
+
+            <div id="barcode-modal" class="edit-modal hidden">
+                <div class="edit-card barcode-modal-card">
+                    <div class="edit-header">
+                        <div>
+                            <span class="edit-kind">SCANNER</span>
+                            <h2>📷 Scansiona codice a barre</h2>
+                        </div>
+                        <button type="button" id="close-barcode-modal" class="close-button" aria-label="Chiudi">✕</button>
+                    </div>
+
+                    <div id="barcode-reader" class="barcode-reader"></div>
+                    <div id="barcode-status" class="barcode-status">Inquadra un codice EAN/UPC.</div>
+
+                    <div id="barcode-result" class="barcode-result hidden">
+                        <div class="barcode-result-code" id="barcode-result-code"></div>
+                        <div id="barcode-result-fields" class="barcode-result-fields"></div>
+                    </div>
+
+                    <button type="button" id="barcode-retry-button" class="hidden">🔄 Scansiona un altro codice</button>
+                </div>
+            </div>
             <button type="submit">➕ Aggiungi articolo</button>
             <div id="admin-message" class="admin-message"></div>
         </form>
@@ -268,6 +290,7 @@ Ultimo aggiornamento<br>
     </div>
 </div>
 
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script type="module" src="script.js"></script>
 
 </body>

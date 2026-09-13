@@ -19,13 +19,16 @@ import {
   adminProductIdInput, adminProductKindInput, adminProductSelect, adminProductType,
   adminProductIcon, adminEditKind, deleteProductButton, adminQuantityInput,
   adminUnitInfo, adminTotalInfo, openAddModalButton, addModal, closeAddModal,
-  inventoryTabs, inventoryViews
+  inventoryTabs, inventoryViews,
+  barcodeModal, closeBarcodeModal, barcodeReader, barcodeStatus,
+  barcodeResult, barcodeResultCode, barcodeResultFields, barcodeRetryButton
 } from "./js/dom.js";
 import {
   loadProducts, loadStock, loadSnack,
   saveProduct, saveStock, saveSnack,
   updateProduct, updateStock, updateSnack,
   deleteProduct, deleteStock, deleteSnack,
+  findBarcode,
   productsCache, stockCache, snackCache, countBottles
 } from "./js/firestore.js";
 
@@ -343,16 +346,191 @@ async function deleteSelectedProduct() {
   }
 }
 
-function setupPhotoButton() {
-  photoButton?.addEventListener("click", () => {
-    photoInput?.click();
-  });
+let barcodeScanner = null;
+let barcodeScannerRunning = false;
+let barcodeScanHandled = false;
 
+function resetBarcodeResult() {
+  barcodeResult?.classList.add("hidden");
+  barcodeRetryButton?.classList.add("hidden");
+  if (barcodeResultCode) barcodeResultCode.textContent = "";
+  if (barcodeResultFields) barcodeResultFields.innerHTML = "";
+}
+
+function formatBarcodeValue(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "object") {
+    try { return JSON.stringify(value, null, 2); }
+    catch { return String(value); }
+  }
+  return String(value);
+}
+
+function renderBarcodeData(barcode, data) {
+  if (!barcodeResult || !barcodeResultFields || !barcodeResultCode) return;
+
+  barcodeResultCode.textContent = `EAN/UPC: ${barcode}`;
+
+  const entries = Object.entries(data || {});
+  if (!entries.length) {
+    barcodeResultFields.innerHTML = `<div class="barcode-empty">Il codice esiste nel DB, ma non contiene ancora informazioni.</div>`;
+  } else {
+    barcodeResultFields.innerHTML = entries.map(([key, value]) => `
+      <div class="barcode-field">
+        <span>${key}</span>
+        <strong>${formatBarcodeValue(value)}</strong>
+      </div>
+    `).join("");
+  }
+
+  barcodeResult.classList.remove("hidden");
+}
+
+async function lookupScannedBarcode(decodedText) {
+  const barcode = String(decodedText || "").replace(/\D/g, "");
+  if (!barcode) return;
+
+  barcodeStatus.textContent = `Codice rilevato: ${barcode}. Cerco nel database...`;
+
+  try {
+    const result = await findBarcode(barcode);
+
+    if (!result) {
+      barcodeStatus.textContent = `Nessun dato trovato per ${barcode} nella collection "Barcodes".`;
+      resetBarcodeResult();
+      barcodeResultCode.textContent = `EAN/UPC: ${barcode}`;
+      barcodeResultFields.innerHTML = `
+        <div class="barcode-empty">
+          Il codice è stato letto correttamente, ma per ora non è presente nel DB.
+          In seguito qui collegheremo Barcode + Open Food Facts.
+        </div>`;
+      barcodeResult.classList.remove("hidden");
+      barcodeRetryButton?.classList.remove("hidden");
+      return;
+    }
+
+    barcodeStatus.textContent = "Prodotto trovato nel database.";
+    renderBarcodeData(barcode, result.data);
+    barcodeRetryButton?.classList.remove("hidden");
+  } catch (error) {
+    console.error("Errore ricerca codice a barre:", error);
+    barcodeStatus.textContent = "Errore durante la lettura del database.";
+    barcodeRetryButton?.classList.remove("hidden");
+  }
+}
+
+async function stopBarcodeScanner() {
+  if (!barcodeScanner) return;
+
+  try {
+    if (barcodeScannerRunning) {
+      await barcodeScanner.stop();
+      barcodeScannerRunning = false;
+    }
+    await barcodeScanner.clear();
+  } catch (error) {
+    console.warn("Chiusura scanner:", error);
+  }
+
+  barcodeScanner = null;
+}
+
+async function startBarcodeScanner() {
+  if (!barcodeReader || !window.Html5Qrcode) {
+    barcodeStatus.textContent = "Scanner non disponibile.";
+    return;
+  }
+
+  await stopBarcodeScanner();
+  resetBarcodeResult();
+  barcodeScanHandled = false;
+  barcodeStatus.textContent = "Richiesta accesso alla fotocamera...";
+
+  barcodeScanner = new window.Html5Qrcode("barcode-reader");
+
+  try {
+    await barcodeScanner.start(
+      { facingMode: { exact: "environment" } },
+      {
+        fps: 10,
+        qrbox: { width: 280, height: 140 },
+        aspectRatio: 1.777778
+      },
+      async (decodedText) => {
+        if (barcodeScanHandled) return;
+        barcodeScanHandled = true;
+
+        await stopBarcodeScanner();
+        await lookupScannedBarcode(decodedText);
+      },
+      () => {}
+    );
+
+    barcodeScannerRunning = true;
+    barcodeStatus.textContent = "Inquadra il codice a barre davanti alla fotocamera.";
+  } catch (firstError) {
+    console.warn("Fotocamera posteriore non disponibile:", firstError);
+
+    try {
+      await stopBarcodeScanner();
+      barcodeScanner = new window.Html5Qrcode("barcode-reader");
+
+      await barcodeScanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 280, height: 140 },
+          aspectRatio: 1.777778
+        },
+        async (decodedText) => {
+          if (barcodeScanHandled) return;
+          barcodeScanHandled = true;
+
+          await stopBarcodeScanner();
+          await lookupScannedBarcode(decodedText);
+        },
+        () => {}
+      );
+
+      barcodeScannerRunning = true;
+      barcodeStatus.textContent = "Inquadra il codice a barre davanti alla fotocamera.";
+    } catch (error) {
+      console.error("Impossibile avviare la fotocamera:", error);
+      barcodeStatus.textContent =
+        "Impossibile aprire la fotocamera. Verifica i permessi del browser e che il sito sia in HTTPS.";
+      barcodeRetryButton?.classList.remove("hidden");
+    }
+  }
+}
+
+function openBarcodeModalHandler() {
+  if (!currentUser || !barcodeModal) return;
+  barcodeModal.classList.remove("hidden");
+  startBarcodeScanner();
+}
+
+async function closeBarcodeModalHandler() {
+  await stopBarcodeScanner();
+  barcodeModal?.classList.add("hidden");
+}
+
+function setupPhotoButton() {
+  photoButton?.addEventListener("click", openBarcodeModalHandler);
+
+  // Manteniamo l'input foto come fallback per dispositivi/browser che non supportano
+  // la fotocamera tramite getUserMedia.
   photoInput?.addEventListener("change", (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     adminMessage.textContent = `Foto selezionata: ${file.name}`;
   });
+
+  closeBarcodeModal?.addEventListener("click", closeBarcodeModalHandler);
+  barcodeModal?.addEventListener("click", event => {
+    if (event.target === barcodeModal) closeBarcodeModalHandler();
+  });
+
+  barcodeRetryButton?.addEventListener("click", startBarcodeScanner);
 }
 
 function setupQuantityButtons() {
