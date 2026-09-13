@@ -458,24 +458,12 @@ function renderOpenFoodFactsProduct(barcode, product) {
       </div>
     </div>
 
-    <div class="off-badges">
-      <span class="off-badge">Nutri-Score <strong>${nutriScore || "—"}</strong></span>
-      <span class="off-badge">${nova}</span>
-      <span class="off-badge">Green-Score <strong>${greenScore}</strong></span>
-    </div>
-
     <div class="barcode-info-section">
       <h4>📦 Prodotto</h4>
       <div class="barcode-info-grid">
         <div><span>Categoria</span><strong>${formatBarcodeValue(category)}</strong></div>
-        <div><span>Paesi</span><strong>${formatBarcodeValue(product?.countries || prettyList(product?.countries_tags))}</strong></div>
-      </div>
-    </div>
-
-    <div class="barcode-info-section">
-      <h4>🥗 Ingredienti</h4>
-      <div class="barcode-info-text">${formatBarcodeValue(ingredients)}</div>
-      <div class="barcode-info-text"><strong>Allergeni:</strong> ${formatBarcodeValue(allergens)}</div>
+        <div class="barcode-info-text"><strong>Allergeni:</strong> ${formatBarcodeValue(allergens)}</div>
+        </div>
     </div>
 
     <div class="barcode-info-section">
