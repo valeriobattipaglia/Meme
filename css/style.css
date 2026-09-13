@@ -1016,3 +1016,24 @@ header{
         grid-template-columns:1fr;
     }
 }
+
+/* Barcode lookup debug */
+.barcode-debug {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+}
+.barcode-debug div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.barcode-debug span {
+  opacity: .7;
+}
+.barcode-debug strong {
+  text-align: right;
+}

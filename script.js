@@ -512,7 +512,10 @@ async function lookupOpenFoodFacts(barcode) {
   }
 
   const payload = await response.json();
-  if (payload?.status !== 1 || !payload?.product) return null;
+  // v3 può restituire il prodotto anche quando il campo status non è
+  // valorizzato come nella vecchia API v2. La presenza di `product` è
+  // quindi il controllo principale.
+  if (!payload?.product || typeof payload.product !== "object") return null;
   return payload.product;
 }
 
@@ -527,11 +530,16 @@ async function lookupScannedBarcode(decodedText) {
     const product = await lookupOpenFoodFacts(barcode);
 
     if (!product) {
-      barcodeStatus.textContent = "Codice letto correttamente.";
+      barcodeStatus.textContent = "Codice letto correttamente — prodotto non trovato.";
       barcodeResultCode.textContent = `EAN/UPC: ${barcode}`;
       barcodeResultFields.innerHTML = `
         <div class="barcode-empty barcode-not-found">
-          Prodotto "${barcode}" non trovato.
+          <strong>Prodotto "${barcode}" non trovato.</strong>
+          <div class="barcode-debug">
+            <div><span>Codice letto</span><strong>${barcode}</strong></div>
+            <div><span>Database</span><strong>Open Food Facts</strong></div>
+            <div><span>Risultato</span><strong>Non presente</strong></div>
+          </div>
         </div>`;
       barcodeResult.classList.remove("hidden");
       barcodeRetryButton?.classList.remove("hidden");
@@ -543,9 +551,17 @@ async function lookupScannedBarcode(decodedText) {
     barcodeRetryButton?.classList.remove("hidden");
   } catch (error) {
     console.error("Errore ricerca Open Food Facts:", error);
-    barcodeStatus.textContent = "Errore durante la ricerca su Open Food Facts. Controlla la connessione.";
+    barcodeStatus.textContent = "Errore durante la richiesta a Open Food Facts.";
     barcodeResultCode.textContent = `EAN/UPC: ${barcode}`;
-    barcodeResultFields.innerHTML = `<div class="barcode-empty">Non riesco a contattare Open Food Facts in questo momento.</div>`;
+    barcodeResultFields.innerHTML = `
+      <div class="barcode-empty">
+        <strong>Errore nella richiesta.</strong>
+        <div class="barcode-debug">
+          <div><span>Codice letto</span><strong>${barcode}</strong></div>
+          <div><span>Database</span><strong>Open Food Facts</strong></div>
+          <div><span>Errore</span><strong>${String(error.message || error).replace(/</g, "&lt;")}</strong></div>
+        </div>
+      </div>`;
     barcodeResult.classList.remove("hidden");
     barcodeRetryButton?.classList.remove("hidden");
   }
