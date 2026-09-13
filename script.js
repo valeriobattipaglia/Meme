@@ -12,8 +12,8 @@ import {
 } from "./js/render.js";
 import {
   siteShell, ageGate, drinkGrid, stockGrid, snackGrid, beverageCount,
-  updateLabel, onlineStatus, footerOnlineStatus, adminForm, adminMessage,
-  adminPanel, adminLink, categoriaSelect, iconSuggestions, iconInput,
+  updateLabel, onlineStatus, footerOnlineStatus, adminForm, photoButton, photoInput,
+  adminMessage, adminPanel, adminLink, categoriaSelect, iconSuggestions, iconInput,
   addQuantityInput, addSingleLitersSelect, addSnackGramsSelect, addFormatPreview,
   editModal, closeEditModal, availabilityForm, availabilityMessage,
   adminProductIdInput, adminProductKindInput, adminProductSelect, adminProductType,
@@ -343,6 +343,18 @@ async function deleteSelectedProduct() {
   }
 }
 
+function setupPhotoButton() {
+  photoButton?.addEventListener("click", () => {
+    photoInput?.click();
+  });
+
+  photoInput?.addEventListener("change", (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    adminMessage.textContent = `Foto selezionata: ${file.name}`;
+  });
+}
+
 function setupQuantityButtons() {
   document.querySelectorAll(".quantity-button").forEach(button => {
     button.addEventListener("click", () => {
@@ -429,6 +441,7 @@ editModal?.addEventListener("click", event => {
 window.addEventListener("online", () => updateOnlineStatus(true));
 window.addEventListener("offline", () => updateOnlineStatus(false));
 
+setupPhotoButton();
 setupQuantityButtons();
 setupInventoryTabs();
 populateSizeOptions();
