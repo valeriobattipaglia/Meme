@@ -13,7 +13,8 @@ import {
 import {
   siteShell, ageGate, drinkGrid, stockGrid, snackGrid, beverageCount,
   updateLabel, onlineStatus, footerOnlineStatus, adminForm, photoButton, photoInput,
-  adminMessage, adminPanel, adminLink, categoriaSelect, iconSuggestions, iconInput,
+  adminMessage, productInfoModal, closeProductInfoModal, productInfoTitle, productInfoContent,
+  adminPanel, adminLink, categoriaSelect, iconSuggestions, iconInput,
   addQuantityInput, addSingleLitersSelect, addSnackGramsSelect, addFormatPreview,
   editModal, closeEditModal, availabilityForm, availabilityMessage,
   adminProductIdInput, adminProductKindInput, adminProductSelect, adminProductType,
@@ -426,17 +427,13 @@ function renderOpenFoodFactsProduct(barcode, product) {
 
   barcodeResultCode.textContent = `EAN/UPC: ${barcode}`;
 
-  const image = offImageUrl(product);
   const name = product?.product_name || "Prodotto senza nome";
   const brand = product?.brands || "—";
   const quantity = product?.quantity || "—";
   const category = product?.categories || prettyList(product?.categories_tags);
-  const ingredients = product?.ingredients_text_it || product?.ingredients_text || "—";
   const allergens = product?.allergens || prettyList(product?.allergens_tags);
   const nutriments = product?.nutriments || {};
 
-  const nutriScore = String(product?.nutriscore_grade || "").toUpperCase();
-  const nova = product?.nova_group ? `NOVA ${product.nova_group}` : "—";
   const greenScore = product?.environmental_score_grade
     ? String(product.environmental_score_grade).toUpperCase()
     : "—";
@@ -548,6 +545,8 @@ async function lookupScannedBarcode(decodedText) {
 
     barcodeStatus.textContent = "Prodotto trovato su Open Food Facts.";
     renderOpenFoodFactsProduct(barcode, product);
+    populateAddFormFromScannedProduct(product);
+    closeBarcodeModalHandler();
     barcodeRetryButton?.classList.remove("hidden");
   } catch (error) {
     console.error("Errore ricerca Open Food Facts:", error);
@@ -662,6 +661,85 @@ async function closeBarcodeModalHandler() {
   barcodeModal?.classList.add("hidden");
 }
 
+function formatInfoValue(value) {
+  if (value === null || value === undefined || value === "") return "Nessuna informazione";
+  if (Array.isArray(value)) return value.join(", ");
+  if (typeof value === "object") {
+    const entries = Object.entries(value).map(([key, item]) => `${key}: ${formatInfoValue(item)}`);
+    return entries.length ? entries.join("<br>") : "Nessuna informazione";
+  }
+  return String(value);
+}
+
+function inferProductCategoryFromScanner(product) {
+  const source = `${product?.categories || ""} ${product?.product_name || ""} ${product?.brands || ""}`.toLowerCase();
+  if (/(snack|chips|cracker|biscuit|cookie|cereal|barretta|nut|cracker|focaccia|frutta secca)/.test(source)) return "snack";
+  return "bevanda";
+}
+
+function populateAddFormFromScannedProduct(product) {
+  if (!adminForm || !categoriaSelect || !document.getElementById("nome")) return;
+
+  const productName = String(product?.product_name || product?.product_name_en || "Prodotto senza nome").trim();
+  const category = inferProductCategoryFromScanner(product);
+
+  document.getElementById("nome").value = productName;
+  categoriaSelect.value = category;
+  if (iconInput) iconInput.value = "";
+  if (addQuantityInput) addQuantityInput.value = "1";
+  updateAddFormVisibility();
+  adminMessage.textContent = `Prodotto trovato: ${productName}. I campi sono stati riempiti automaticamente.`;
+}
+
+function openProductInfo(productId, kind) {
+  const item = findItem(productId, kind);
+  if (!item || !productInfoModal || !productInfoContent || !productInfoTitle) return;
+
+  const data = item.data || {};
+  const name = getProductName(data, productId);
+  const icon = getProductIcon(data);
+  const type = kind === "snack" ? "Snack" : kind === "stock" ? "Stock" : getProductType(data);
+  const allergeni = data.Allergeni ?? data.allergeni ?? data.Allergens ?? data.allergens ?? "Nessuna informazione";
+  const ingredienti = data.Ingredienti ?? data.ingredienti ?? data.Ingredients ?? data.ingredients ?? "Nessuna informazione";
+  const nutrizionali = data.ValoriNutrizionali ?? data.valoriNutrizionali ?? data.NutritionalValues ?? data.nutritionalValues ?? null;
+
+  const nutritionItems = nutrizionali && typeof nutrizionali === "object"
+    ? Object.entries(nutrizionali).map(([key, value]) => `<div><span>${key}</span><strong>${formatInfoValue(value)}</strong></div>`).join("")
+    : "<div class=\"barcode-empty\"><strong>Nessuna informazione nutrizionale disponibile.</strong></div>";
+
+  productInfoTitle.textContent = `${icon} ${name}`;
+  productInfoContent.innerHTML = `
+    <div class="off-product-head">
+      <div class="off-product-image off-product-image-empty">${icon}</div>
+      <div class="off-product-main">
+        <h3>${name}</h3>
+        <div class="off-product-brand">${type}</div>
+      </div>
+    </div>
+
+    <div class="barcode-info-section">
+      <h4>🥗 Ingredienti</h4>
+      <div class="barcode-info-text">${formatInfoValue(ingredienti)}</div>
+    </div>
+
+    <div class="barcode-info-section">
+      <h4>⚠️ Allergeni</h4>
+      <div class="barcode-info-text">${formatInfoValue(allergeni)}</div>
+    </div>
+
+    <div class="barcode-info-section">
+      <h4>📊 Valori nutrizionali</h4>
+      <div class="off-nutrition-grid">${nutritionItems}</div>
+    </div>
+  `;
+
+  productInfoModal.classList.remove("hidden");
+}
+
+function closeProductInfoModalHandler() {
+  productInfoModal?.classList.add("hidden");
+}
+
 function setupPhotoButton() {
   photoButton?.addEventListener("click", openBarcodeModalHandler);
 
@@ -676,6 +754,11 @@ function setupPhotoButton() {
   closeBarcodeModal?.addEventListener("click", closeBarcodeModalHandler);
   barcodeModal?.addEventListener("click", event => {
     if (event.target === barcodeModal) closeBarcodeModalHandler();
+  });
+
+  closeProductInfoModal?.addEventListener("click", closeProductInfoModalHandler);
+  productInfoModal?.addEventListener("click", event => {
+    if (event.target === productInfoModal) closeProductInfoModalHandler();
   });
 
   barcodeRetryButton?.addEventListener("click", startBarcodeScanner);
@@ -699,6 +782,15 @@ function setupQuantityButtons() {
 function setupGridClickListener(gridElement) {
   if (!gridElement) return;
   gridElement.addEventListener("click", event => {
+    const infoButton = event.target.closest(".card-info-button");
+    if (infoButton) {
+      event.stopPropagation();
+      const id = infoButton.dataset.docId;
+      const kind = infoButton.dataset.kind || "drink";
+      if (id) openProductInfo(id, kind);
+      return;
+    }
+
     const card = event.target.closest(".card");
     if (!card) return;
     const id = card.dataset.docId;

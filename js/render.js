@@ -144,6 +144,8 @@ export function renderCard(doc, forcedCategory = null) {
       ${amountDetails} • ${getfrifgeLabel(percent)}
     </div>
   </div>
+
+  <button type="button" class="card-info-button" data-doc-id="${productId}" data-kind="${kind}">Info</button>
 </article>
   `;
 }

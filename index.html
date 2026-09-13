@@ -107,6 +107,8 @@ Ultimo aggiornamento<br>
                 </div>
             </div>
 
+            <input id="icona" type="hidden" value="">
+
             <div class="admin-field">
                 <label for="icon-suggestions">Icona suggerita</label>
                 <select id="icon-suggestions" class="icon-suggestions" aria-label="Seleziona un'icona suggerita"></select>
@@ -287,6 +289,20 @@ Ultimo aggiornamento<br>
             </div>
             <div id="availability-message" class="admin-message"></div>
         </form>
+    </div>
+</div>
+
+<div id="product-info-modal" class="edit-modal hidden">
+    <div class="edit-card">
+        <div class="edit-header">
+            <div>
+                <span class="edit-kind">INFORMAZIONI</span>
+                <h2 id="product-info-title">Dettagli prodotto</h2>
+            </div>
+            <button type="button" id="close-product-info-modal" class="close-button" aria-label="Chiudi">✕</button>
+        </div>
+
+        <div id="product-info-content" class="product-info-content"></div>
     </div>
 </div>
 
