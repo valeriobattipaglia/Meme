@@ -34,6 +34,41 @@ import {
 const ADULT_REDIRECT_URL = "https://www.youtube.com/watch?v=cGUTvXkMcT8";
 const ADULT_STORAGE_KEY = "minifrigo_adult_confirmed";
 
+function readStoredChoice() {
+  try {
+    const sessionValue = sessionStorage.getItem(ADULT_STORAGE_KEY);
+    if (sessionValue) return sessionValue;
+  } catch (error) {
+    console.warn("sessionStorage non disponibile, provo fallback locale.", error);
+  }
+
+  try {
+    const localValue = localStorage.getItem(ADULT_STORAGE_KEY);
+    if (localValue) return localValue;
+  } catch (error) {
+    console.warn("localStorage non disponibile, uso fallback in memoria.", error);
+  }
+
+  return document.body?.dataset?.adultChoice || null;
+}
+
+function storeChoice(choice) {
+  try {
+    sessionStorage.setItem(ADULT_STORAGE_KEY, choice);
+    return;
+  } catch (error) {
+    console.warn("sessionStorage bloccato, fallback su localStorage.", error);
+  }
+
+  try {
+    localStorage.setItem(ADULT_STORAGE_KEY, choice);
+    return;
+  } catch (error) {
+    console.warn("localStorage bloccato, uso fallback in memoria.", error);
+    if (document.body) document.body.dataset.adultChoice = choice;
+  }
+}
+
 const ICONS = {
   bevanda: ["🥤", "🥤", "🥛", "🧃", "🍺", "🍷", "🥂", "☕", "🧋", "💧"],
   stock: ["🥤", "🥤", "🥛", "🧃", "🍺", "🍷", "🥂", "☕", "🧋", "💧"],
@@ -664,7 +699,7 @@ function updateOnlineStatus(isOnline) {
 }
 
 function grantAccess() {
-  sessionStorage.setItem(ADULT_STORAGE_KEY, "yes");
+  storeChoice("yes");
   ageGate?.classList.add("hidden");
   siteShell?.classList.remove("hidden");
   syncAdminUI();
@@ -672,12 +707,12 @@ function grantAccess() {
 }
 
 function denyAccess() {
-  sessionStorage.setItem(ADULT_STORAGE_KEY, "no");
+  storeChoice("no");
   window.location.href = ADULT_REDIRECT_URL;
 }
 
 function initAgeGate() {
-  const storedChoice = sessionStorage.getItem(ADULT_STORAGE_KEY);
+  const storedChoice = readStoredChoice();
   syncAdminUI();
 
   if (storedChoice === "yes") {
