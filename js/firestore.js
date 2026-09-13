@@ -1,5 +1,5 @@
 import {collection,getDocs,addDoc,doc,updateDoc,deleteDoc,getDoc,query,where,limit} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { db } from "../firebase.js";
+import { db } from "../../../../Meme-main/firebase.js";
 import {getBottleQuantity} from "./render.js";
 
 export let productsCache = [];
@@ -115,6 +115,7 @@ export async function findBarcode(barcode) {
 
     return null;
 }
+
 // ==========================
 // CONTATORI
 // ==========================

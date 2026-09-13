@@ -28,7 +28,6 @@ import {
   saveProduct, saveStock, saveSnack,
   updateProduct, updateStock, updateSnack,
   deleteProduct, deleteStock, deleteSnack,
-  findBarcode,
   productsCache, stockCache, snackCache, countBottles
 } from "./js/firestore.js";
 
@@ -359,6 +358,7 @@ function resetBarcodeResult() {
 
 function formatBarcodeValue(value) {
   if (value === null || value === undefined || value === "") return "—";
+  if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "object") {
     try { return JSON.stringify(value, null, 2); }
     catch { return String(value); }
@@ -366,55 +366,152 @@ function formatBarcodeValue(value) {
   return String(value);
 }
 
-function renderBarcodeData(barcode, data) {
+function offImageUrl(product) {
+  return product?.image_front_url || product?.image_url || "";
+}
+
+function nutritionValue(nutriments, key, unit) {
+  const value = nutriments?.[`${key}_100g`];
+  if (value === undefined || value === null || value === "") return "—";
+  return `${value} ${unit}`;
+}
+
+function prettyList(value) {
+  if (!value) return "—";
+  if (Array.isArray(value)) {
+    return value
+      .map(item => String(item).replace(/^[a-z]{2,3}:/i, "").replace(/-/g, " "))
+      .join(", ");
+  }
+  return String(value);
+}
+
+function renderOpenFoodFactsProduct(barcode, product) {
   if (!barcodeResult || !barcodeResultFields || !barcodeResultCode) return;
 
   barcodeResultCode.textContent = `EAN/UPC: ${barcode}`;
 
-  const entries = Object.entries(data || {});
-  if (!entries.length) {
-    barcodeResultFields.innerHTML = `<div class="barcode-empty">Il codice esiste nel DB, ma non contiene ancora informazioni.</div>`;
-  } else {
-    barcodeResultFields.innerHTML = entries.map(([key, value]) => `
-      <div class="barcode-field">
-        <span>${key}</span>
-        <strong>${formatBarcodeValue(value)}</strong>
+  const image = offImageUrl(product);
+  const name = product?.product_name || "Prodotto senza nome";
+  const brand = product?.brands || "—";
+  const quantity = product?.quantity || "—";
+  const category = product?.categories || prettyList(product?.categories_tags);
+  const ingredients = product?.ingredients_text_it || product?.ingredients_text || "—";
+  const allergens = product?.allergens || prettyList(product?.allergens_tags);
+  const nutriments = product?.nutriments || {};
+
+  const nutriScore = String(product?.nutriscore_grade || "").toUpperCase();
+  const nova = product?.nova_group ? `NOVA ${product.nova_group}` : "—";
+  const greenScore = product?.environmental_score_grade
+    ? String(product.environmental_score_grade).toUpperCase()
+    : "—";
+
+  const nutrition = [
+    ["Energia", nutritionValue(nutriments, "energy-kcal", "kcal")],
+    ["Grassi", nutritionValue(nutriments, "fat", "g")],
+    ["di cui saturi", nutritionValue(nutriments, "saturated-fat", "g")],
+    ["Carboidrati", nutritionValue(nutriments, "carbohydrates", "g")],
+    ["di cui zuccheri", nutritionValue(nutriments, "sugars", "g")],
+    ["Proteine", nutritionValue(nutriments, "proteins", "g")],
+    ["Sale", nutritionValue(nutriments, "salt", "g")]
+  ];
+
+  barcodeResultFields.innerHTML = `
+    <div class="off-product-head">
+      ${image ? `<img class="off-product-image" src="${image}" alt="${name.replace(/"/g, '&quot;')}" loading="lazy">` : `<div class="off-product-image off-product-image-empty">🥤</div>`}
+      <div class="off-product-main">
+        <h3>${name}</h3>
+        <div class="off-product-brand">${brand}</div>
+        <div class="off-product-quantity">${quantity}</div>
       </div>
-    `).join("");
-  }
+    </div>
+
+    <div class="off-badges">
+      <span class="off-badge">Nutri-Score <strong>${nutriScore || "—"}</strong></span>
+      <span class="off-badge">${nova}</span>
+      <span class="off-badge">Green-Score <strong>${greenScore}</strong></span>
+    </div>
+
+    <div class="barcode-info-section">
+      <h4>📦 Prodotto</h4>
+      <div class="barcode-info-grid">
+        <div><span>Categoria</span><strong>${formatBarcodeValue(category)}</strong></div>
+        <div><span>Paesi</span><strong>${formatBarcodeValue(product?.countries || prettyList(product?.countries_tags))}</strong></div>
+      </div>
+    </div>
+
+    <div class="barcode-info-section">
+      <h4>🥗 Ingredienti</h4>
+      <div class="barcode-info-text">${formatBarcodeValue(ingredients)}</div>
+      <div class="barcode-info-text"><strong>Allergeni:</strong> ${formatBarcodeValue(allergens)}</div>
+    </div>
+
+    <div class="barcode-info-section">
+      <h4>📊 Valori nutrizionali · per 100 g/ml</h4>
+      <div class="off-nutrition-grid">
+        ${nutrition.map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join("")}
+      </div>
+    </div>
+
+    <div class="off-source">Dati: Open Food Facts · codice ${barcode}</div>
+  `;
 
   barcodeResult.classList.remove("hidden");
+}
+
+async function lookupOpenFoodFacts(barcode) {
+  // Open Food Facts API v3: è l'unico database interrogato in questa fase.
+  const fields = [
+    "code", "product_name", "brands", "quantity", "categories", "categories_tags",
+    "countries", "countries_tags", "ingredients_text", "ingredients_text_it",
+    "allergens", "allergens_tags", "nutriscore_grade", "nova_group",
+    "environmental_score_grade", "nutriments", "image_front_url", "image_url"
+  ].join(",");
+
+  const url = `https://world.openfoodfacts.org/api/v3/product/${encodeURIComponent(barcode)}?fields=${encodeURIComponent(fields)}&lc=it&cc=it`;
+  const response = await fetch(url, { headers: { "Accept": "application/json" } });
+
+  if (!response.ok) {
+    if (response.status === 404) return null;
+    throw new Error(`Open Food Facts HTTP ${response.status}`);
+  }
+
+  const payload = await response.json();
+  if (payload?.status !== 1 || !payload?.product) return null;
+  return payload.product;
 }
 
 async function lookupScannedBarcode(decodedText) {
   const barcode = String(decodedText || "").replace(/\D/g, "");
   if (!barcode) return;
 
-  barcodeStatus.textContent = `Codice rilevato: ${barcode}. Cerco nel database...`;
+  barcodeStatus.textContent = `Codice rilevato: ${barcode}. Cerco su Open Food Facts...`;
+  resetBarcodeResult();
 
   try {
-    const result = await findBarcode(barcode);
+    const product = await lookupOpenFoodFacts(barcode);
 
-    if (!result) {
-      barcodeStatus.textContent = `Nessun dato trovato per ${barcode} nella collection "Barcodes".`;
-      resetBarcodeResult();
+    if (!product) {
+      barcodeStatus.textContent = `Nessun prodotto trovato su Open Food Facts per ${barcode}.`;
       barcodeResultCode.textContent = `EAN/UPC: ${barcode}`;
       barcodeResultFields.innerHTML = `
         <div class="barcode-empty">
-          Il codice è stato letto correttamente, ma per ora non è presente nel DB.
-          In seguito qui collegheremo Barcode + Open Food Facts.
+          Il codice è stato letto correttamente, ma Open Food Facts non contiene ancora questo prodotto.
         </div>`;
       barcodeResult.classList.remove("hidden");
       barcodeRetryButton?.classList.remove("hidden");
       return;
     }
 
-    barcodeStatus.textContent = "Prodotto trovato nel database.";
-    renderBarcodeData(barcode, result.data);
+    barcodeStatus.textContent = "Prodotto trovato su Open Food Facts.";
+    renderOpenFoodFactsProduct(barcode, product);
     barcodeRetryButton?.classList.remove("hidden");
   } catch (error) {
-    console.error("Errore ricerca codice a barre:", error);
-    barcodeStatus.textContent = "Errore durante la lettura del database.";
+    console.error("Errore ricerca Open Food Facts:", error);
+    barcodeStatus.textContent = "Errore durante la ricerca su Open Food Facts. Controlla la connessione.";
+    barcodeResultCode.textContent = `EAN/UPC: ${barcode}`;
+    barcodeResultFields.innerHTML = `<div class="barcode-empty">Non riesco a contattare Open Food Facts in questo momento.</div>`;
+    barcodeResult.classList.remove("hidden");
     barcodeRetryButton?.classList.remove("hidden");
   }
 }
