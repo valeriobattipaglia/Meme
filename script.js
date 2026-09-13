@@ -492,11 +492,11 @@ async function lookupScannedBarcode(decodedText) {
     const product = await lookupOpenFoodFacts(barcode);
 
     if (!product) {
-      barcodeStatus.textContent = `Nessun prodotto trovato su Open Food Facts per ${barcode}.`;
+      barcodeStatus.textContent = "Codice letto correttamente.";
       barcodeResultCode.textContent = `EAN/UPC: ${barcode}`;
       barcodeResultFields.innerHTML = `
-        <div class="barcode-empty">
-          Il codice è stato letto correttamente, ma Open Food Facts non contiene ancora questo prodotto.
+        <div class="barcode-empty barcode-not-found">
+          Prodotto "${barcode}" non trovato.
         </div>`;
       barcodeResult.classList.remove("hidden");
       barcodeRetryButton?.classList.remove("hidden");

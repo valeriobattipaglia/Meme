@@ -851,6 +851,14 @@ header{
     font-size:14px;
 }
 
+.barcode-not-found{
+    color:#ffb4b4;
+    font-weight:700;
+    font-size:16px;
+    text-align:center;
+    padding:14px 10px;
+}
+
 #barcode-retry-button{
     margin-top:12px;
 }
