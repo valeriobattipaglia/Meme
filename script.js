@@ -80,6 +80,7 @@ const DRINK_SIZES = [0.20, 0.25, 0.33, 0.50, 0.75, 1, 1.5, 2];
 const SNACK_SIZES = [20, 30, 40, 50, 75, 100, 125, 150, 200, 250, 500];
 
 let currentUser = null;
+let scannedProductDetails = null;
 
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
@@ -180,17 +181,27 @@ async function addArticle(event) {
   if (!nome) return;
 
   try {
+    const scannedData = scannedProductDetails ? {
+      CodiceABarre: scannedProductDetails.code,
+      Marca: scannedProductDetails.brands || "",
+      CategoriaProdotto: scannedProductDetails.categories || "",
+      Ingredienti: scannedProductDetails.ingredients_text_it || scannedProductDetails.ingredients_text || "",
+      Allergeni: scannedProductDetails.allergens || "",
+      ValoriNutrizionali: scannedProductDetails.nutriments || {},
+      Immagine: offImageUrl(scannedProductDetails)
+    } : {};
+
     if (category === "snack") {
       const grams = Math.max(1, Number(addSnackGramsSelect?.value) || 50);
-      await saveSnack({ Nome: nome, Tipo: "Snack", Icona: icona, Quantita: quantity, grammiquantita: grams });
+      await saveSnack({ Nome: nome, Tipo: "Snack", Icona: icona, Quantita: quantity, grammiquantita: grams, ...scannedData });
       adminMessage.textContent = "Snack aggiunto con successo!";
     } else if (category === "stock") {
       const liters = Number(addSingleLitersSelect?.value) || 0.33;
-      await saveStock({ Nome: nome, Tipo: "Stock", Icona: icona, Quantita: quantity, LitriUnita: liters });
+      await saveStock({ Nome: nome, Tipo: "Stock", Icona: icona, Quantita: quantity, LitriUnita: liters, ...scannedData });
       adminMessage.textContent = "Articolo aggiunto allo stock!";
     } else {
       const liters = Number(addSingleLitersSelect?.value) || 0.33;
-      await saveProduct({ Nome: nome, Tipo: "Bevanda", Icona: icona, Quantita: quantity, LitriUnita: liters });
+      await saveProduct({ Nome: nome, Tipo: "Bevanda", Icona: icona, Quantita: quantity, LitriUnita: liters, ...scannedData });
       adminMessage.textContent = "Bevanda aggiunta al frigo!";
     }
 
@@ -199,6 +210,7 @@ async function addArticle(event) {
     addQuantityInput.value = "1";
     populateSizeOptions();
     updateAddFormVisibility();
+    scannedProductDetails = null;
     await refreshInventory();
     closeAddModalHandler();
   } catch (error) {
@@ -221,6 +233,7 @@ function syncAdminUI() {
 function openAddModalHandler() {
   if (!currentUser || !addModal) return;
 
+  scannedProductDetails = null;
   adminMessage.textContent = "";
   adminForm?.reset();
   if (categoriaSelect) categoriaSelect.value = "bevanda";
@@ -666,17 +679,47 @@ function inferProductCategoryFromScanner(product) {
   return "bevanda";
 }
 
+function parseScannedQuantity(value) {
+  const match = String(value || "").replace(",", ".").match(/(\d+(?:\.\d+)?)\s*(ml|cl|l|g|kg)\b/i);
+  if (!match) return null;
+
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  if (!Number.isFinite(amount)) return null;
+  if (unit === "ml" || unit === "cl" || unit === "l") {
+    return { type: "liters", value: unit === "ml" ? amount / 1000 : unit === "cl" ? amount / 100 : amount };
+  }
+  return { type: "grams", value: unit === "kg" ? amount * 1000 : amount };
+}
+
+function selectClosestOption(select, value) {
+  if (!select || !Number.isFinite(value)) return;
+  const options = [...select.options];
+  const closest = options.reduce((best, option) => {
+    const distance = Math.abs(Number(option.value) - value);
+    return !best || distance < best.distance ? { option, distance } : best;
+  }, null);
+  if (closest) select.value = closest.option.value;
+}
+
 function populateAddFormFromScannedProduct(product) {
   if (!adminForm || !categoriaSelect || !document.getElementById("nome")) return;
 
   const productName = String(product?.product_name || product?.product_name_en || "Prodotto senza nome").trim();
   const category = inferProductCategoryFromScanner(product);
 
+  scannedProductDetails = { ...product, code: product?.code || "" };
   document.getElementById("nome").value = productName;
   categoriaSelect.value = category;
   if (iconInput) iconInput.value = "";
-  if (addQuantityInput) addQuantityInput.value = "1";
+  const scannedQuantity = parseScannedQuantity(product?.quantity);
   updateAddFormVisibility();
+  if (scannedQuantity?.type === "liters") {
+    selectClosestOption(addSingleLitersSelect, scannedQuantity.value);
+  } else if (scannedQuantity?.type === "grams") {
+    selectClosestOption(addSnackGramsSelect, scannedQuantity.value);
+  }
+  updateAddPreview();
   adminMessage.textContent = `Prodotto trovato: ${productName}. I campi sono stati riempiti automaticamente.`;
 }
 
