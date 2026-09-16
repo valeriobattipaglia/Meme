@@ -421,7 +421,7 @@ function offImageUrl(product) {
 
 function nutritionValue(nutriments, key, unit) {
   const value = nutriments?.[`${key}_100g`];
-  if (value === undefined || value === null || value === "") return "—";
+  if (value === undefined || value === null || value === "") return "N/A";
   return `${value} ${unit}`;
 }
 
@@ -511,9 +511,6 @@ async function lookupOpenFoodFacts(barcode) {
   }
 
   const payload = await response.json();
-  // v3 può restituire il prodotto anche quando il campo status non è
-  // valorizzato come nella vecchia API v2. La presenza di `product` è
-  // quindi il controllo principale.
   if (!payload?.product || typeof payload.product !== "object") return null;
   return payload.product;
 }
@@ -720,7 +717,7 @@ function populateAddFormFromScannedProduct(product) {
     selectClosestOption(addSnackGramsSelect, scannedQuantity.value);
   }
   updateAddPreview();
-  adminMessage.textContent = `Prodotto trovato: ${scannedQuantity.value}. I campi sono stati riempiti automaticamente.`;
+  adminMessage.textContent = `Prodotto trovato: ${productName}. I campi sono stati riempiti automaticamente.`;
 }
 
 function openProductInfo(productId, kind) {
@@ -735,9 +732,18 @@ function openProductInfo(productId, kind) {
   const ingredienti = data.Ingredienti ?? data.ingredienti ?? data.Ingredients ?? data.ingredients ?? "Nessuna informazione";
   const nutrizionali = data.ValoriNutrizionali ?? data.valoriNutrizionali ?? data.NutritionalValues ?? data.nutritionalValues ?? null;
 
-  const nutritionItems = nutrizionali && typeof nutrizionali === "object"
-    ? Object.entries(nutrizionali).map(([key, value]) => `<div><span>${key}</span><strong>${formatInfoValue(value)}</strong></div>`).join("")
-    : "<div class=\"barcode-empty\"><strong>Nessuna informazione nutrizionale disponibile.</strong></div>";
+  const nutrition = [
+    ["Energia", nutritionValue(nutrizionali, "energy-kcal", "kcal")],
+    ["Grassi", nutritionValue(nutrizionali, "fat", "g")],
+    ["di cui saturi", nutritionValue(nutrizionali, "saturated-fat", "g")],
+    ["Carboidrati", nutritionValue(nutrizionali, "carbohydrates", "g")],
+    ["di cui zuccheri", nutritionValue(nutrizionali, "sugars", "g")],
+    ["Proteine", nutritionValue(nutrizionali, "proteins", "g")],
+    ["Sale", nutritionValue(nutrizionali, "salt", "g")]
+  ];
+  const nutritionItems = nutrition
+    .map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`)
+    .join("");
 
   productInfoTitle.textContent = `${icon} ${name}`;
   productInfoContent.innerHTML = `
@@ -766,10 +772,12 @@ function openProductInfo(productId, kind) {
   `;
 
   productInfoModal.classList.remove("hidden");
+  document.body.classList.add("modal-open");
 }
 
 function closeProductInfoModalHandler() {
   productInfoModal?.classList.add("hidden");
+  document.body.classList.remove("modal-open");
 }
 
 function setupPhotoButton() {
