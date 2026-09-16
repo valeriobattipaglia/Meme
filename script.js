@@ -720,7 +720,7 @@ function populateAddFormFromScannedProduct(product) {
     selectClosestOption(addSnackGramsSelect, scannedQuantity.value);
   }
   updateAddPreview();
-  adminMessage.textContent = `Prodotto trovato: ${productName}. I campi sono stati riempiti automaticamente.`;
+  adminMessage.textContent = `Prodotto trovato: ${scannedQuantity.value}. I campi sono stati riempiti automaticamente.`;
 }
 
 function openProductInfo(productId, kind) {
