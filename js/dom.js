@@ -54,3 +54,16 @@ export const barcodeResult = document.getElementById("barcode-result");
 export const barcodeResultCode = document.getElementById("barcode-result-code");
 export const barcodeResultFields = document.getElementById("barcode-result-fields");
 export const barcodeRetryButton = document.getElementById("barcode-retry-button");
+
+export const guestPanel = document.getElementById("guest-panel");
+export const guestModeTakeButton = document.getElementById("guest-mode-take");
+export const guestModeReturnButton = document.getElementById("guest-mode-return");
+export const guestModeLabel = document.getElementById("guest-mode-label");
+export const guestBarcodeInput = document.getElementById("guest-barcode-input");
+export const guestCameraButton = document.getElementById("guest-camera-button");
+export const guestScanStatus = document.getElementById("guest-scan-status");
+export const guestLogoutButton = document.getElementById("guest-logout-button");
+export const guestActionResult = document.getElementById("guest-action-result");
+
+export const addBarcodeInput = document.getElementById("add-barcode-input");
+export const addBarcodeStatus = document.getElementById("add-barcode-status");

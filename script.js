@@ -22,14 +22,18 @@ import {
   adminUnitInfo, adminTotalInfo, openAddModalButton, addModal, closeAddModal,
   inventoryTabs, inventoryViews,
   barcodeModal, closeBarcodeModal, barcodeReader, barcodeStatus,
-  barcodeResult, barcodeResultCode, barcodeResultFields, barcodeRetryButton
+  barcodeResult, barcodeResultCode, barcodeResultFields, barcodeRetryButton,
+  guestPanel, guestModeTakeButton, guestModeReturnButton, guestModeLabel,
+  guestBarcodeInput, guestCameraButton, guestScanStatus, guestLogoutButton,
+  guestActionResult, addBarcodeInput, addBarcodeStatus
 } from "./js/dom.js";
 import {
   loadProducts, loadStock, loadSnack,
   saveProduct, saveStock, saveSnack,
   updateProduct, updateStock, updateSnack,
   deleteProduct, deleteStock, deleteSnack,
-  productsCache, stockCache, snackCache, countBottles
+  productsCache, stockCache, snackCache, countBottles,
+  getOwnUserProfile, findInventoryItemByBarcode, changeInventoryQuantity
 } from "./js/firestore.js";
 
 const ADULT_REDIRECT_URL = "https://www.youtube.com/watch?v=cGUTvXkMcT8";
@@ -80,10 +84,26 @@ const DRINK_SIZES = [0.20, 0.25, 0.33, 0.50, 0.75, 1, 1.5, 2];
 const SNACK_SIZES = [20, 30, 40, 50, 75, 100, 125, 150, 200, 250, 500];
 
 let currentUser = null;
+let currentRole = null;
 let scannedProductDetails = null;
+let guestMode = "take"; // take = -1, return = +1
+let guestScanner = null;
+let guestScannerRunning = false;
+let guestScanHandled = false;
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   currentUser = user;
+  currentRole = null;
+
+  if (user) {
+    try {
+      const profile = await getOwnUserProfile(user.uid);
+      currentRole = profile?.role || null;
+    } catch (error) {
+      console.error("Profilo utente non disponibile:", error);
+    }
+  }
+
   syncAdminUI();
 });
 
@@ -220,13 +240,31 @@ async function addArticle(event) {
 }
 
 function syncAdminUI() {
-  const isAdmin = currentUser !== null;
+  const isAdmin = currentRole === "admin";
+  const isGuest = currentRole === "guest";
+
   openAddModalButton?.classList.toggle("hidden", !isAdmin);
+  guestPanel?.classList.toggle("hidden", !isGuest);
+
   if (!isAdmin) closeAddModalHandler();
+  if (!isGuest) closeGuestScanner();
 
   if (adminLink) {
-    adminLink.textContent = isAdmin ? "🔓" : "🔐";
-    adminLink.title = isAdmin ? "Logout admin" : "Area admin";
+    adminLink.textContent = isAdmin ? "🔓" : isGuest ? "🥤" : "🔐";
+    adminLink.title = isAdmin
+      ? "Logout admin"
+      : isGuest
+        ? "Sessione ospite · clicca per uscire"
+        : "Accesso admin / ospite";
+    adminLink.classList.toggle("logged-in", isAdmin || isGuest);
+  }
+
+  if (guestModeTakeButton) guestModeTakeButton.classList.toggle("active", guestMode === "take");
+  if (guestModeReturnButton) guestModeReturnButton.classList.toggle("active", guestMode === "return");
+  if (guestModeLabel) {
+    guestModeLabel.textContent = guestMode === "take"
+      ? "Modalità prelievo · ogni scansione −1"
+      : "Modalità rimessa · ogni scansione +1";
   }
 }
 
@@ -235,6 +273,8 @@ function openAddModalHandler() {
 
   scannedProductDetails = null;
   adminMessage.textContent = "";
+  if (addBarcodeInput) addBarcodeInput.value = "";
+  if (addBarcodeStatus) addBarcodeStatus.textContent = "Pronto per il lettore USB.";
   adminForm?.reset();
   if (categoriaSelect) categoriaSelect.value = "bevanda";
   if (addQuantityInput) addQuantityInput.value = "1";
@@ -780,6 +820,237 @@ function closeProductInfoModalHandler() {
   document.body.classList.remove("modal-open");
 }
 
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function setGuestMode(mode) {
+  guestMode = mode === "return" ? "return" : "take";
+  syncAdminUI();
+  if (guestScanStatus) {
+    guestScanStatus.textContent = guestMode === "take"
+      ? "Modalità prelievo: scansiona una bevanda o uno snack per diminuirne la quantità di 1."
+      : "Modalità rimessa: scansiona una bevanda o uno snack per aumentarne la quantità di 1.";
+  }
+  guestBarcodeInput?.focus();
+}
+
+function showGuestResult(message, type = "success") {
+  if (!guestActionResult) return;
+  guestActionResult.className = `guest-action-result ${type}`;
+  guestActionResult.textContent = message;
+}
+
+async function processGuestBarcode(rawBarcode) {
+  if (currentRole !== "guest") return;
+
+  const barcode = String(rawBarcode || "").replace(/\D/g, "");
+  if (!barcode) return;
+
+  if (guestBarcodeInput) guestBarcodeInput.value = "";
+  if (guestScanStatus) guestScanStatus.textContent = `Codice ${barcode} rilevato. Cerco il prodotto...`;
+
+  try {
+    // Il prodotto deve essere già presente nel nostro inventario.
+    // Il guest può cambiare solo la quantità, non creare nuovi articoli.
+    const item = findInventoryItemByBarcode(barcode);
+
+    if (!item) {
+      showGuestResult(`Nessun prodotto del MiniFrigo associato al codice ${barcode}.`, "error");
+      if (guestScanStatus) guestScanStatus.textContent = "Scansione completata. Prodotto non presente nell'inventario.";
+      return;
+    }
+
+    const delta = guestMode === "take" ? -1 : 1;
+    const name = getProductName(item.data, item.id);
+    const icon = getProductIcon(item.data);
+    const action = delta < 0 ? "Prelievo" : "Rimessa";
+
+    const result = await changeInventoryQuantity(item.kind, item.id, delta, {
+      uid: currentUser?.uid,
+      name,
+      barcode
+    });
+
+    if (!result.changed) {
+      showGuestResult(
+        delta < 0
+          ? `${icon} ${name}: quantità già a 0.`
+          : `${icon} ${name}: nessuna modifica necessaria.`,
+        "warning"
+      );
+    } else {
+      showGuestResult(
+        `${icon} ${name} · ${action}: ${result.previous} → ${result.next}`,
+        "success"
+      );
+    }
+
+    if (guestScanStatus) {
+      guestScanStatus.textContent = "Pronto per la prossima scansione.";
+    }
+
+    await refreshInventory();
+    guestBarcodeInput?.focus();
+  } catch (error) {
+    console.error("Operazione ospite fallita:", error);
+    showGuestResult("Operazione non riuscita. Controlla la connessione e riprova.", "error");
+    if (guestScanStatus) guestScanStatus.textContent = "Errore durante l'aggiornamento.";
+  }
+}
+
+function setupGuestBarcodeInput() {
+  guestBarcodeInput?.addEventListener("keydown", event => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    processGuestBarcode(guestBarcodeInput.value);
+  });
+
+  guestBarcodeInput?.addEventListener("input", () => {
+    // Alcuni scanner USB inviano il codice senza Enter.
+    // Se il codice raggiunge una lunghezza EAN tipica, aspettiamo
+    // un breve momento per permettere al lettore di terminare l'input.
+    clearTimeout(guestBarcodeInput._scanTimer);
+    const value = guestBarcodeInput.value.replace(/\D/g, "");
+    if (value.length >= 8) {
+      guestBarcodeInput._scanTimer = setTimeout(() => {
+        if (guestBarcodeInput.value.replace(/\D/g, "") === value) {
+          processGuestBarcode(value);
+        }
+      }, 80);
+    }
+  });
+
+  guestModeTakeButton?.addEventListener("click", () => setGuestMode("take"));
+  guestModeReturnButton?.addEventListener("click", () => setGuestMode("return"));
+
+  guestCameraButton?.addEventListener("click", openGuestScanner);
+  guestLogoutButton?.addEventListener("click", async () => {
+    await signOut(auth);
+    currentUser = null;
+    currentRole = null;
+    syncAdminUI();
+    showGuestResult("", "success");
+  });
+
+  guestPanel?.addEventListener("click", event => {
+    if (event.target === guestPanel) guestBarcodeInput?.focus();
+  });
+}
+
+async function closeGuestScanner() {
+  if (!guestScanner) {
+    guestScannerRunning = false;
+    return;
+  }
+
+  try {
+    if (guestScannerRunning) {
+      await guestScanner.stop();
+      guestScannerRunning = false;
+    }
+    await guestScanner.clear();
+  } catch (error) {
+    console.warn("Chiusura scanner ospite:", error);
+  }
+
+  guestScanner = null;
+  document.getElementById("guest-camera-reader")?.classList.add("hidden");
+}
+
+async function openGuestScanner() {
+  if (currentRole !== "guest" || !window.Html5Qrcode) return;
+
+  await closeGuestScanner();
+  guestScanHandled = false;
+
+  if (guestScanStatus) guestScanStatus.textContent = "Richiesta accesso alla fotocamera...";
+  guestCameraButton?.classList.add("hidden");
+
+  const scannerBox = document.getElementById("guest-camera-reader");
+  if (!scannerBox) return;
+  scannerBox.classList.remove("hidden");
+
+  guestScanner = new window.Html5Qrcode("guest-camera-reader");
+
+  try {
+    await guestScanner.start(
+      { facingMode: { exact: "environment" } },
+      { fps: 10, qrbox: { width: 280, height: 140 }, aspectRatio: 1.777778 },
+      async decodedText => {
+        if (guestScanHandled) return;
+        guestScanHandled = true;
+        await closeGuestScanner();
+        guestCameraButton?.classList.remove("hidden");
+        await processGuestBarcode(decodedText);
+      },
+      () => {}
+    );
+
+    guestScannerRunning = true;
+    if (guestScanStatus) guestScanStatus.textContent = "Inquadra il barcode del prodotto.";
+  } catch (error) {
+    console.warn("Scanner guest non avviabile:", error);
+    guestCameraButton?.classList.remove("hidden");
+    if (guestScanStatus) guestScanStatus.textContent = "Fotocamera non disponibile. Usa il lettore USB.";
+  }
+}
+
+
+function setupAddBarcodeInput() {
+  if (!addBarcodeInput) return;
+
+  let timer = null;
+
+  async function handleValue() {
+    const barcode = addBarcodeInput.value.replace(/\D/g, "");
+    if (barcode.length < 8) return;
+
+    addBarcodeInput.value = barcode;
+    if (addBarcodeStatus) addBarcodeStatus.textContent = `Codice ${barcode} rilevato. Cerco il prodotto…`;
+
+    try {
+      const product = await lookupOpenFoodFacts(barcode);
+      if (!product) {
+        if (addBarcodeStatus) addBarcodeStatus.textContent = `Codice ${barcode} letto, ma il prodotto non è presente su Open Food Facts.`;
+        scannedProductDetails = { code: barcode };
+        return;
+      }
+
+      product.code = barcode;
+      populateAddFormFromScannedProduct(product);
+      if (addBarcodeStatus) addBarcodeStatus.textContent = `✓ ${product.product_name || "Prodotto trovato"} · campi compilati.`;
+    } catch (error) {
+      console.error(error);
+      if (addBarcodeStatus) addBarcodeStatus.textContent = "Errore nella ricerca Open Food Facts.";
+    }
+  }
+
+  addBarcodeInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      clearTimeout(timer);
+      handleValue();
+    }
+  });
+
+  addBarcodeInput.addEventListener("input", () => {
+    clearTimeout(timer);
+    const value = addBarcodeInput.value.replace(/\D/g, "");
+    if (value.length >= 8) {
+      timer = setTimeout(() => {
+        if (addBarcodeInput.value.replace(/\D/g, "") === value) handleValue();
+      }, 100);
+    }
+  });
+}
+
 function setupPhotoButton() {
   photoButton?.addEventListener("click", openBarcodeModalHandler);
 
@@ -835,7 +1106,13 @@ function setupGridClickListener(gridElement) {
     if (!card) return;
     const id = card.dataset.docId;
     const kind = card.dataset.kind || "drink";
-    if (id) openEditModal(id, kind);
+    if (id) {
+      if (currentRole === "guest") {
+        openProductInfo(id, kind);
+      } else if (currentRole === "admin") {
+        openEditModal(id, kind);
+      }
+    }
   });
 }
 
@@ -900,6 +1177,8 @@ window.addEventListener("online", () => updateOnlineStatus(true));
 window.addEventListener("offline", () => updateOnlineStatus(false));
 
 setupPhotoButton();
+setupGuestBarcodeInput();
+setupAddBarcodeInput();
 setupQuantityButtons();
 setupInventoryTabs();
 populateSizeOptions();

@@ -3,114 +3,223 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MiniFrigo • Admin</title>
+  <title>MiniFrigo • Accesso</title>
+  <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg:#080b12;
-      --card:#121823;
-      --border:#263247;
-      --text:#f5f7fb;
-      --muted:#8d99aa;
-      --ice:#55c7ff;
-      --green:#43e28a;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-    body {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: radial-gradient(circle at top, #162b42 0%, transparent 35%), linear-gradient(180deg, #080b12, #0d111a);
-      color: var(--text);
-      padding: 24px;
-    }
-
-    .panel {
-      width: min(420px, 100%);
-      background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 28px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.45);
-    }
-
-    h1 { margin-bottom: 8px; font-size: 32px; }
-    p { color: var(--muted); line-height: 1.7; margin-bottom: 18px; }
-    label { display:block; font-size:13px; color: var(--muted); margin-bottom: 6px; }
-    input, button {
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      padding: 12px 14px;
-      font-size: 15px;
-    }
-    input { background: #0c1320; color: var(--text); }
-    button { background: var(--ice); color: #07111b; font-weight: 700; cursor: pointer; margin-top: 10px; }
-    .error { color: #ff9d9d; margin-top: 10px; min-height: 20px; }
-  </style>
 </head>
-<body>
-  <div class="panel">
-    <h1>🔐 Admin</h1>
-    <p>Inserisci le credenziali Firebase per accedere all’area di modifica delle bevande.</p>
-    <form id="admin-login-form">
-      <label for="email">Email</label>
-      <input id="email" type="email" placeholder="Email admin" required>
-      <label for="password">Password</label>
-      <input id="password" type="password" placeholder="Password admin" required>
-      <button type="submit">Accedi</button>
-      <div id="login-error" class="error"></div>
-    </form>
-  </div>
+<body class="auth-page">
+  <main class="auth-shell">
+    <a class="auth-back" href="index.html">← Torna al MiniFrigo</a>
 
+    <section class="auth-card">
+      <div class="auth-brand">🧊</div>
+      <span class="guest-kicker">MINIFRIGO</span>
+      <h1>Accesso</h1>
+      <p class="auth-subtitle">Scegli come vuoi accedere. L'accesso ospite serve solo per movimentare le quantità.</p>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-auth-tab="guest">🥤 Ospite</button>
+        <button type="button" class="auth-tab" data-auth-tab="admin">🔐 Admin</button>
+      </div>
+
+      <section id="guest-auth-panel" class="auth-section">
+        <div class="auth-callout">
+          <strong>Accesso rapido</strong>
+          <span>Usa il lettore USB sul barcode del MiniFrigo oppure la fotocamera del telefono.</span>
+        </div>
+
+        <label for="guest-email">Utente</label>
+        <input id="guest-email" type="text" value="ospite" readonly>
+
+        <label for="guest-password">Codice di accesso</label>
+        <input id="guest-password" type="password" inputmode="numeric" autocomplete="off"
+               placeholder="Scansiona il barcode del MiniFrigo">
+
+        <button type="button" id="guest-camera-button" class="auth-secondary">📷 Scansiona con il telefono</button>
+        <div id="guest-auth-reader" class="auth-reader hidden"></div>
+        <div id="guest-auth-status" class="auth-status">Il campo codice è pronto per il lettore USB.</div>
+
+        <button type="button" id="guest-login-button" class="auth-primary">Entra come ospite</button>
+        <div id="guest-login-error" class="auth-error"></div>
+      </section>
+
+      <section id="admin-auth-panel" class="auth-section hidden">
+        <div class="auth-callout admin-callout">
+          <strong>Area amministratore</strong>
+          <span>Accesso completo a prodotti, stock e configurazione dell'inventario.</span>
+        </div>
+
+        <form id="admin-login-form">
+          <label for="email">Email admin</label>
+          <input id="email" type="email" placeholder="Email admin" required>
+
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="Password admin" required>
+
+          <button type="submit" class="auth-primary">Accedi come admin</button>
+          <div id="login-error" class="auth-error"></div>
+        </form>
+      </section>
+
+      <div class="auth-footer">
+        <span>🔒 Permessi separati tra Admin e Ospite</span>
+      </div>
+    </section>
+  </main>
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script type="module">
+import { auth } from "./firebase.js";
+import {
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import { initializeApp } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+const GUEST_EMAIL = "ospite@minifrigo.app";
 
-import { 
-getAuth,
-signInWithEmailAndPassword
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+const adminForm = document.getElementById("admin-login-form");
+const adminError = document.getElementById("login-error");
+const guestPassword = document.getElementById("guest-password");
+const guestLoginButton = document.getElementById("guest-login-button");
+const guestError = document.getElementById("guest-login-error");
+const guestCameraButton = document.getElementById("guest-camera-button");
+const guestAuthReader = document.getElementById("guest-auth-reader");
+const guestAuthStatus = document.getElementById("guest-auth-status");
 
-
-const firebaseConfig = {
-
-  apiKey: "AIzaSyAkHOF2S_NRreXMHU1yDpc6o11r1wpxj9g",
-  authDomain: "minifrigo-673a5.firebaseapp.com",
-  projectId: "minifrigo-673a5",
-  storageBucket: "minifrigo-673a5.firebasestorage.app",
-  messagingSenderId: "346725946911",
-  appId: "1:346725946911:web:94d4bda49c1760c315e72a"
-
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const loginForm =document.getElementById("admin-login-form");
-const loginError =document.getElementById("login-error");
-loginForm.addEventListener("submit",async (event)=>{event.preventDefault();
-
-const email = document.getElementById("email").value.trim();
-const password = document.getElementById("password").value;
-
-try
-{
-    await signInWithEmailAndPassword(auth,email,password);
-    window.location.href="index.html";
-}
-
-catch(error)
-{
-    console.error(error);
-    loginError.textContent ="Password errata.";
-}
-
+document.querySelectorAll("[data-auth-tab]").forEach(button => {
+  button.addEventListener("click", () => {
+    const target = button.dataset.authTab;
+    document.querySelectorAll(".auth-tab").forEach(tab => {
+      tab.classList.toggle("active", tab === button);
+    });
+    document.getElementById("guest-auth-panel").classList.toggle("hidden", target !== "guest");
+    document.getElementById("admin-auth-panel").classList.toggle("hidden", target !== "admin");
+    if (target === "guest") guestPassword.focus();
+  });
 });
 
+async function loginGuest() {
+  const password = guestPassword.value.trim();
+  if (!password) {
+    guestError.textContent = "Scansiona prima il codice del MiniFrigo.";
+    return;
+  }
 
+  guestError.textContent = "";
+  guestLoginButton.disabled = true;
+  guestLoginButton.textContent = "Accesso…";
+
+  try {
+    await signInWithEmailAndPassword(auth, GUEST_EMAIL, password);
+    window.location.href = "index.html";
+  } catch (error) {
+    console.error(error);
+    guestError.textContent = "Codice di accesso non valido.";
+  } finally {
+    guestLoginButton.disabled = false;
+    guestLoginButton.textContent = "Entra come ospite";
+  }
+}
+
+guestLoginButton.addEventListener("click", loginGuest);
+guestPassword.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    loginGuest();
+  }
+});
+let guestInputTimer = null;
+guestPassword.addEventListener("input", () => {
+  clearTimeout(guestInputTimer);
+  const value = guestPassword.value.trim();
+  if (value.length >= 8) {
+    guestInputTimer = setTimeout(() => {
+      if (guestPassword.value.trim() === value) loginGuest();
+    }, 100);
+  }
+});
+
+let scanner = null;
+let scannerRunning = false;
+let handled = false;
+
+async function stopScanner() {
+  if (!scanner) return;
+  try {
+    if (scannerRunning) {
+      await scanner.stop();
+      scannerRunning = false;
+    }
+    await scanner.clear();
+  } catch (error) {
+    console.warn(error);
+  }
+  scanner = null;
+  guestAuthReader.classList.add("hidden");
+}
+
+async function startScanner() {
+  if (!window.Html5Qrcode) return;
+
+  await stopScanner();
+  handled = false;
+  guestAuthReader.classList.remove("hidden");
+  guestCameraButton.disabled = true;
+  guestAuthStatus.textContent = "Richiesta accesso alla fotocamera…";
+
+  scanner = new window.Html5Qrcode("guest-auth-reader");
+
+  try {
+    await scanner.start(
+      { facingMode: { exact: "environment" } },
+      { fps: 10, qrbox: { width: 280, height: 140 }, aspectRatio: 1.777778 },
+      async decodedText => {
+        if (handled) return;
+        handled = true;
+        guestPassword.value = decodedText;
+        guestAuthStatus.textContent = "Codice acquisito. Accesso pronto.";
+        await stopScanner();
+        guestCameraButton.disabled = false;
+        await loginGuest();
+      },
+      () => {}
+    );
+    scannerRunning = true;
+    guestAuthStatus.textContent = "Inquadra il barcode del MiniFrigo.";
+  } catch (error) {
+    console.error(error);
+    guestAuthStatus.textContent = "Fotocamera non disponibile. Usa il lettore USB.";
+    guestCameraButton.disabled = false;
+    await stopScanner();
+  }
+}
+
+guestCameraButton.addEventListener("click", startScanner);
+
+adminForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  adminError.textContent = "";
+
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      document.getElementById("email").value.trim(),
+      document.getElementById("password").value
+    );
+    window.location.href = "index.html";
+  } catch (error) {
+    console.error(error);
+    adminError.textContent = "Credenziali non valide.";
+  }
+});
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    // Se si arriva qui con una sessione già attiva, il tasto torna al sito.
+    // Non forziamo il redirect per non interferire con un eventuale cambio tab.
+  }
+});
 </script>
 </body>
 </html>

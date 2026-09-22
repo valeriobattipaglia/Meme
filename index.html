@@ -64,6 +64,44 @@ Ultimo aggiornamento<br>
     <button type="button" class="inventory-tab" data-tab="snack" role="tab" aria-selected="false">🍟 Snack</button>
 </div>
 
+
+<section id="guest-panel" class="guest-panel hidden" aria-label="Modalità ospite">
+  <div class="guest-panel-header">
+    <div>
+      <span class="guest-kicker">ACCESSO OSPITE</span>
+      <h2>🥤 Gestisci il frigo</h2>
+      <p>Scansiona un prodotto per aggiornare la quantità. Il tuo accesso non permette di creare o cancellare articoli.</p>
+    </div>
+    <button type="button" id="guest-logout-button" class="guest-logout-button">Esci</button>
+  </div>
+
+  <div class="guest-mode-switch" role="group" aria-label="Operazione">
+    <button type="button" id="guest-mode-take" class="guest-mode-button active">− 1&nbsp; Prelevo</button>
+    <button type="button" id="guest-mode-return" class="guest-mode-button">＋ 1&nbsp; Rimetto</button>
+  </div>
+
+  <div class="guest-scan-area">
+    <div class="guest-scan-icon">▣</div>
+    <div class="guest-scan-copy">
+      <strong>Scansiona il barcode</strong>
+      <span id="guest-mode-label">Modalità prelievo · ogni scansione −1</span>
+    </div>
+  </div>
+
+  <div class="guest-input-wrap">
+    <label for="guest-barcode-input">Lettore USB</label>
+    <input id="guest-barcode-input" inputmode="numeric" autocomplete="off"
+           placeholder="Passa il prodotto davanti al lettore…" aria-label="Barcode prodotto">
+    <small>Il campo resta attivo per il lettore USB. Non serve aprire la fotocamera.</small>
+  </div>
+
+  <button type="button" id="guest-camera-button" class="guest-camera-button">📷 Usa la fotocamera del telefono</button>
+
+  <div id="guest-camera-reader" class="guest-camera-reader hidden"></div>
+  <div id="guest-scan-status" class="guest-scan-status">Pronto: scansiona un prodotto.</div>
+  <div id="guest-action-result" class="guest-action-result success" aria-live="polite"></div>
+</section>
+
 <section class="inventory-view active" data-view="drink">
     <h2 class="section-title">🥤 Bevande in Frigo ❄️</h2>
     <div id="drink-grid" class="grid"></div>
@@ -136,7 +174,19 @@ Ultimo aggiornamento<br>
             </div>
 
             <div id="add-format-preview" class="format-preview"></div>
-            <button type="button" id="open-photo-button">📷 Scansiona codice a barre</button>
+
+            <div class="barcode-entry-card">
+                <div>
+                    <strong>🔌 Lettore barcode</strong>
+                    <span>Collega l'Atlantis al telefono/PC e lascia il cursore qui.</span>
+                </div>
+                <input id="add-barcode-input" inputmode="numeric" autocomplete="off"
+                       placeholder="Scansiona con il lettore USB…"
+                       aria-label="Barcode prodotto">
+                <small id="add-barcode-status">Oppure usa la fotocamera qui sotto.</small>
+            </div>
+
+            <button type="button" id="open-photo-button">📷 Scansiona con la fotocamera</button>
             <input id="photo-input" type="file" accept="image/*" capture="environment" class="hidden" aria-label="Scatta una foto">
 
             <div id="barcode-modal" class="edit-modal hidden">
@@ -227,7 +277,7 @@ Ultimo aggiornamento<br>
 
 
 <p>
-<strong>Accesso:</strong> NFC attivo
+<strong>Accesso:</strong> Admin + modalità ospite
 </p>
 
 

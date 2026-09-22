@@ -1,127 +1,147 @@
-import {collection,getDocs,addDoc,doc,updateDoc,deleteDoc,getDoc,query,where,limit} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  query,
+  where,
+  limit,
+  runTransaction,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { db } from "../firebase.js";
-import {getBottleQuantity} from "./render.js";
+import { getBottleQuantity } from "./render.js";
 
 export let productsCache = [];
 export let stockCache = [];
 export let snackCache = [];
-// ==========================
-// BEVANDE
-// ==========================
 
-export async function loadProducts()
-{
-    const snapshot =await getDocs(collection(db,"Prodotti"));
-    productsCache =snapshot.docs.map(doc=>({id:doc.id,data:doc.data()}));
-    return snapshot.docs;
+async function loadCollection(name) {
+  const snapshot = await getDocs(collection(db, name));
+  return snapshot.docs.map(item => ({ id: item.id, data: item.data() }));
 }
 
-export async function saveProduct(payload)
-{
-    return await addDoc(collection(db,"Prodotti"),payload);
+export async function loadProducts() {
+  productsCache = await loadCollection("Prodotti");
+  return productsCache;
 }
-
-export async function updateProduct(id,data)
-{
-    const ref =doc(db,"Prodotti",id);
-    return await updateDoc(ref,data);
-}
-
-export async function deleteProduct(id)
-{
-    const ref =doc(db,"Prodotti",id);
-    return await deleteDoc(ref);
-}
-
-
-// ==========================
-// STOCK
-// ==========================
 
 export async function loadStock() {
-    const snapshot = await getDocs(collection(db, "Stock"));
-    stockCache = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-    return snapshot.docs;
+  stockCache = await loadCollection("Stock");
+  return stockCache;
+}
+
+export async function loadSnack() {
+  snackCache = await loadCollection("Snack");
+  return snackCache;
+}
+
+export async function saveProduct(payload) {
+  return addDoc(collection(db, "Prodotti"), payload);
+}
+
+export async function updateProduct(id, data) {
+  return updateDoc(doc(db, "Prodotti", id), data);
+}
+
+export async function deleteProduct(id) {
+  return deleteDoc(doc(db, "Prodotti", id));
 }
 
 export async function saveStock(payload) {
-    return await addDoc(collection(db, "Stock"), payload);
+  return addDoc(collection(db, "Stock"), payload);
 }
 
 export async function updateStock(id, data) {
-    const ref = doc(db, "Stock", id);
-    return await updateDoc(ref, data);
+  return updateDoc(doc(db, "Stock", id), data);
 }
 
 export async function deleteStock(id) {
-    const ref = doc(db, "Stock", id);
-    return await deleteDoc(ref);
-}
-
-
-// ==========================
-// SNACK
-// ==========================
-
-export async function loadSnack() {
-    const snapshot = await getDocs(collection(db, "Snack"));
-    snackCache = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-    return snapshot.docs;
+  return deleteDoc(doc(db, "Stock", id));
 }
 
 export async function saveSnack(payload) {
-    return await addDoc(collection(db, "Snack"), payload);
+  return addDoc(collection(db, "Snack"), payload);
 }
 
 export async function updateSnack(id, data) {
-    const ref = doc(db, "Snack", id);
-    return await updateDoc(ref, data);
+  return updateDoc(doc(db, "Snack", id), data);
 }
 
 export async function deleteSnack(id) {
-    const ref = doc(db, "Snack", id);
-    return await deleteDoc(ref);
+  return deleteDoc(doc(db, "Snack", id));
 }
 
-// ==========================
-// CODICI A BARRE
-// ==========================
+// Cerca un prodotto per barcode nelle tre collezioni dell'inventario.
+// Non dipende da una collezione Barcodes separata.
+export function findInventoryItemByBarcode(barcode) {
+  const clean = String(barcode || "").replace(/\D/g, "");
+  if (!clean) return null;
 
-// Per ora il database atteso è:
-// Barcodes/{EAN}
-// oppure un documento della collection Barcodes con campo Codice = EAN.
-export async function findBarcode(barcode) {
-    const cleanBarcode = String(barcode || "").replace(/\D/g, "");
-    if (!cleanBarcode) return null;
+  const collections = [
+    ["drink", productsCache],
+    ["stock", stockCache],
+    ["snack", snackCache]
+  ];
 
-    // Prima prova: ID del documento = codice a barre.
-    const directRef = doc(db, "Barcodes", cleanBarcode);
-    const directSnap = await getDoc(directRef);
-    if (directSnap.exists()) {
-        return { id: directSnap.id, data: directSnap.data() };
-    }
+  for (const [kind, items] of collections) {
+    const found = items.find(item => {
+      const value = item.data?.CodiceABarre ?? item.data?.Barcode ?? item.data?.barcode;
+      return String(value || "").replace(/\D/g, "") === clean;
+    });
+    if (found) return { ...found, kind };
+  }
 
-    // Seconda prova: campo Codice = codice a barre.
-    const q = query(
-        collection(db, "Barcodes"),
-        where("Codice", "==", cleanBarcode),
-        limit(1)
-    );
-    const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-        const item = snapshot.docs[0];
-        return { id: item.id, data: item.data() };
-    }
-
-    return null;
+  return null;
 }
 
-// ==========================
-// CONTATORI
-// ==========================
+// Aggiornamento atomico della sola quantità.
+// È importante per evitare che due telefoni sovrascrivano
+// accidentalmente la quantità dell'altro.
+export async function changeInventoryQuantity(kind, id, delta, metadata = {}) {
+  const collectionName = kind === "snack" ? "Snack" : kind === "stock" ? "Stock" : "Prodotti";
+  const ref = doc(db, collectionName, id);
 
+  return runTransaction(db, async transaction => {
+    const snap = await transaction.get(ref);
+    if (!snap.exists()) throw new Error("Articolo non trovato.");
 
-export function countBottles()
-{
-    return productsCache.reduce((totale, prodotto)=>{return totale +getBottleQuantity(prodotto.data);},0);
+    const current = getBottleQuantity(snap.data());
+    const next = Math.max(0, current + Number(delta || 0));
+
+    if (next === current) {
+      return { previous: current, next, changed: false };
+    }
+
+    transaction.update(ref, { Quantita: next });
+
+    const movementRef = doc(collection(db, "Movimenti"));
+    transaction.set(movementRef, {
+      uid: metadata.uid || null,
+      azione: Number(delta) < 0 ? "prelievo" : "rimessa",
+      delta: Number(delta),
+      productId: id,
+      kind,
+      Nome: metadata.name || "",
+      CodiceABarre: metadata.barcode || "",
+      quantitaPrecedente: current,
+      quantitaSuccessiva: next,
+      createdAt: serverTimestamp()
+    });
+
+    return { previous: current, next, changed: true };
+  });
+}
+
+export async function getOwnUserProfile(uid) {
+  if (!uid) return null;
+  const snap = await getDoc(doc(db, "users", uid));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export function countBottles() {
+  return productsCache.reduce((total, product) => total + getBottleQuantity(product.data), 0);
 }
